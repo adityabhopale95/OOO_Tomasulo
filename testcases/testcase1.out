@@ -20,18 +20,18 @@ Register                 Value  ROB
       F10        100/0x42c80000    -
 
 DATA MEMORY[0x00000000:0x00000030]
-0x00000000: ff ff ff ff 
-0x00000004: ff ff ff ff 
-0x00000008: ff ff ff ff 
-0x0000000c: ff ff ff ff 
-0x00000010: ff ff ff ff 
-0x00000014: 00 00 20 41 
-0x00000018: ff ff ff ff 
-0x0000001c: ff ff ff ff 
-0x00000020: ff ff ff ff 
-0x00000024: ff ff ff ff 
-0x00000028: 00 00 f0 41 
-0x0000002c: ff ff ff ff 
+0x00000000: ff ff ff ff
+0x00000004: ff ff ff ff
+0x00000008: ff ff ff ff
+0x0000000c: ff ff ff ff
+0x00000010: ff ff ff ff
+0x00000014: 00 00 20 41
+0x00000018: ff ff ff ff
+0x0000001c: ff ff ff ff
+0x00000020: ff ff ff ff
+0x00000024: ff ff ff ff
+0x00000028: 00 00 f0 41
+0x0000002c: ff ff ff ff
 
 *****************************
 STARTING THE PROGRAM...
@@ -1031,18 +1031,18 @@ Register                 Value  ROB
       F10        100/0x42c80000    -
 
 DATA MEMORY[0x00000000:0x00000030]
-0x00000000: ff ff ff ff 
-0x00000004: ff ff ff ff 
-0x00000008: ff ff ff ff 
-0x0000000c: ff ff ff ff 
-0x00000010: ff ff ff ff 
-0x00000014: 00 00 20 41 
-0x00000018: ff ff ff ff 
-0x0000001c: ff ff ff ff 
-0x00000020: ff ff ff ff 
-0x00000024: ff ff ff ff 
-0x00000028: 00 00 f0 41 
-0x0000002c: ff ff ff ff 
+0x00000000: ff ff ff ff
+0x00000004: ff ff ff ff
+0x00000008: ff ff ff ff
+0x0000000c: ff ff ff ff
+0x00000010: ff ff ff ff
+0x00000014: 00 00 20 41
+0x00000018: ff ff ff ff
+0x0000001c: ff ff ff ff
+0x00000020: ff ff ff ff
+0x00000024: ff ff ff ff
+0x00000028: 00 00 f0 41
+0x0000002c: ff ff ff ff
 
 EXECUTION LOG
         PC  Issue    Exe     WR Commit
