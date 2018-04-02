@@ -38,6 +38,12 @@ class sim_ooo{
 	float float_reg_file[NUM_FP_REGISTERS];
 	unsigned base_add;
 	unsigned current_PC;
+	unsigned head_ROB;
+	unsigned current_R_int;
+	unsigned current_R_mul;
+	unsigned current_R_add;
+	unsigned current_R_mem;
+	unsigned current_B;
 
 public:
 
@@ -69,6 +75,8 @@ public:
 	//runs the simulator for "cycles" clock cycles (run the program to completion if cycles=0)
 	void run(unsigned cycles=0);
 
+	//Issue stage of the Tomasulo's algorithm
+	void issue();
 	//resets the state of the simulator
         /* Note:
 	   - registers should be reset to UNDEFINED value
