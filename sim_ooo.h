@@ -42,8 +42,9 @@ class sim_ooo{
 	unsigned current_R_int;
 	unsigned current_R_mul;
 	unsigned current_R_add;
-	unsigned current_R_mem;
+	unsigned current_R_ld;
 	unsigned current_B;
+	unsigned check_branch;
 
 public:
 
@@ -77,6 +78,9 @@ public:
 
 	//Issue stage of the Tomasulo's algorithm
 	void issue();
+
+	//Execute stage of the Tomasulo's algorithm
+	void execute_ins();
 	//resets the state of the simulator
         /* Note:
 	   - registers should be reset to UNDEFINED value

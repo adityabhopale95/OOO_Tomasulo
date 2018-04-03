@@ -42,6 +42,7 @@ struct RES_Stat_struc{
   unsigned Qk;
   unsigned res_dest;
   unsigned res_A;
+	exe_unit_t op;
 };
 
 struct REGISTER_Stat{
@@ -66,7 +67,7 @@ struct pack_of_exec
 every_line every_instruct;
 
 ROB_struc ROB_tab = {1,0,0,UNDEFINED,INVALID,"",UNDEFINED};
-RES_Stat_struc RES_Temp = {UNDEFINED,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED};
+RES_Stat_struc RES_Temp = {UNDEFINED,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED};
 pack_of_exec execution_structure;
 std::vector<REGISTER_Stat> int_reg_stat;
@@ -492,11 +493,79 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].ROB_num = current_B;
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Int[current_R_int].op = INTEGER;
 			}
 
 			break;
 
 		case MULT:
+			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+				if(RES_Stat_Mul[i].res_busy!=1){
+					current_R_mul = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed,instruction_memory[0].remainder_operand1.c_str());
+				hold_val1 = atoi(operands_needed+1);
+				strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
+				hold_val2 = atoi(operands_needed+1);
+				if(int_reg_stat[hold_val1].reg_busy){
+					head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qj = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vj = register_file[hold_val1];
+					RES_Stat_Mul[current_R_mul].Qj = 0;
+				}
+				RES_Stat_Mul[current_R_mul].res_busy = 1;
+				RES_Stat_Mul[current_R_mul].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				if(int_reg_stat[hold_val2].reg_busy){
+					head_ROB = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qk = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vk = register_file[hold_val2];
+					RES_Stat_Mul[current_R_mul].Qk = 0;
+				}
+				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+				int_reg_stat[hold_val].ROB_num = current_B;
+				int_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+			}
+
+			break;
+
 		case DIV:
 			for(int i = 0; i < RES_Stat_Mul.size(); i++){
 				if(RES_Stat_Mul[i].res_busy!=1){
@@ -560,6 +629,7 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].ROB_num = current_B;
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Mul[current_R_mul].op = DIVIDER;
 			}
 
 			break;
@@ -621,78 +691,565 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].ROB_num = current_B;
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Int[current_R_int].op = INTEGER;
 			}
 
 			break;
 
-			case ADDS:
-			case SUBS:
-				for(int i = 0; i < RES_Stat_Add.size(); i++){
-					if(RES_Stat_Add[i].res_busy!=1){
-						current_R_add = i;
-						res_yes = 1;
-						break;
-					}
-					else{
-						res_yes = 0;
-					}
+		case ADDS:
+		case SUBS:
+			for(int i = 0; i < RES_Stat_Add.size(); i++){
+				if(RES_Stat_Add[i].res_busy!=1){
+					current_R_add = i;
+					res_yes = 1;
+					break;
 				}
-				for(int i = 0; i < ROB_table.size(); i++){
-					if(ROB_table[i].rob_busy!=1){
-						current_B = i;
-						rob_yes = 1;
-						break;
-					}
-					else{
-						rob_yes = 0;
-					}
+				else{
+					res_yes = 0;
 				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
 
-				if(res_yes == 1 && rob_yes == 1){
-					strcpy(operands_needed,instruction_memory[0].remainder_operand1.c_str());
-					hold_val1 = atoi(operands_needed+1);
-					strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
-		      hold_val2 = atoi(operands_needed+1);
-		      if(float_reg_stat[hold_val1].reg_busy){
-		        head_ROB = float_reg_stat[hold_val1].ROB_num;
-						if(ROB_table[head_ROB].ready){
-							RES_Stat_Add[current_R_add].Vj = ROB_table[head_ROB].rob_val;
-							RES_Stat_Add[current_R_add].Qj = 0;
-						}
-						else{
-							RES_Stat_Add[current_R_add].Qj = head_ROB;
-						}
-		      }
-					else{
-						RES_Stat_Add[current_R_add].Vj = float_reg_file[hold_val1];
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed,instruction_memory[0].remainder_operand1.c_str());
+				hold_val1 = atoi(operands_needed+1);
+				strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
+	      hold_val2 = atoi(operands_needed+1);
+	      if(float_reg_stat[hold_val1].reg_busy){
+	        head_ROB = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Add[current_R_add].Vj = ROB_table[head_ROB].rob_val;
 						RES_Stat_Add[current_R_add].Qj = 0;
 					}
-					RES_Stat_Add[current_R_add].res_busy = 1;
-					RES_Stat_Add[current_R_add].res_dest = current_B;
-					ROB_table[current_B].rob_pc = 0;
-
-					if(float_reg_stat[hold_val2].reg_busy){
-						head_ROB = float_reg_stat[hold_val2].ROB_num;
-						if(ROB_table[head_ROB].ready){
-							RES_Stat_Add[current_R_add].Vk = ROB_table[head_ROB].rob_val;
-							RES_Stat_Add[current_R_add].Qk = 0;
-						}
-						else{
-							RES_Stat_Add[current_R_add].Qk = head_ROB;
-						}
-					}
 					else{
-						RES_Stat_Add[current_R_add].Vk = float_reg_file[hold_val2];
+						RES_Stat_Add[current_R_add].Qj = head_ROB;
+					}
+	      }
+				else{
+					RES_Stat_Add[current_R_add].Vj = float_reg_file[hold_val1];
+					RES_Stat_Add[current_R_add].Qj = 0;
+				}
+				RES_Stat_Add[current_R_add].res_busy = 1;
+				RES_Stat_Add[current_R_add].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				if(float_reg_stat[hold_val2].reg_busy){
+					head_ROB = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Add[current_R_add].Vk = ROB_table[head_ROB].rob_val;
 						RES_Stat_Add[current_R_add].Qk = 0;
 					}
-
-					strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
-					hold_val = atoi(operands_needed+1);
-					float_reg_stat[hold_val].ROB_num = current_B;
-					float_reg_stat[hold_val].reg_busy = 1;
-					strcpy(ROB_table[current_B].rob_dest,operands_needed);
+					else{
+						RES_Stat_Add[current_R_add].Qk = head_ROB;
+					}
 				}
+				else{
+					RES_Stat_Add[current_R_add].Vk = float_reg_file[hold_val2];
+					RES_Stat_Add[current_R_add].Qk = 0;
+				}
+
+				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+				float_reg_stat[hold_val].ROB_num = current_B;
+				float_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Add[current_R_add].op = ADDER;
+			}
+			break;
+
+		case MULTS:
+			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+				if(RES_Stat_Mul[i].res_busy!=1){
+					current_R_mul = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed,instruction_memory[0].remainder_operand1.c_str());
+				hold_val1 = atoi(operands_needed+1);
+				strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
+				hold_val2 = atoi(operands_needed+1);
+				if(float_reg_stat[hold_val1].reg_busy){
+					head_ROB = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qj = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vj = float_reg_file[hold_val1];
+					RES_Stat_Mul[current_R_mul].Qj = 0;
+				}
+				RES_Stat_Mul[current_R_mul].res_busy = 1;
+				RES_Stat_Mul[current_R_mul].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				if(float_reg_stat[hold_val2].reg_busy){
+					head_ROB = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qk = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vk = float_reg_file[hold_val2];
+					RES_Stat_Mul[current_R_mul].Qk = 0;
+				}
+				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+				float_reg_stat[hold_val].ROB_num = current_B;
+				float_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+			}
+
+			break;
+
+		case DIVS:
+			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+				if(RES_Stat_Mul[i].res_busy!=1){
+					current_R_mul = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed,instruction_memory[0].remainder_operand1.c_str());
+				hold_val1 = atoi(operands_needed+1);
+				strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
+				hold_val2 = atoi(operands_needed+1);
+				if(float_reg_stat[hold_val1].reg_busy){
+					head_ROB = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qj = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vj = float_reg_file[hold_val1];
+					RES_Stat_Mul[current_R_mul].Qj = 0;
+				}
+				RES_Stat_Mul[current_R_mul].res_busy = 1;
+				RES_Stat_Mul[current_R_mul].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				if(float_reg_stat[hold_val2].reg_busy){
+					head_ROB = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+						RES_Stat_Mul[current_R_mul].Qk = 0;
+					}
+					else{
+						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Mul[current_R_mul].Vk = float_reg_file[hold_val2];
+					RES_Stat_Mul[current_R_mul].Qk = 0;
+				}
+				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+				float_reg_stat[hold_val].ROB_num = current_B;
+				float_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+			}
+
+			break;
+
+		case BEQZ:
+		case BNEZ:
+		case BLTZ:
+		case BGTZ:
+		case BLEZ:
+		case BGEZ:
+			for(int i = 0; i < RES_Stat_Int.size(); i++){
+				if(RES_Stat_Int[i].res_busy!=1){
+					current_R_int = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
+				hold_val1 = atoi(operands_needed+1);
+				if(int_reg_stat[hold_val1].reg_busy){
+	        head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Int[current_R_int].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Int[current_R_int].Qj = 0;
+					}
+					else{
+						RES_Stat_Int[current_R_int].Qj = head_ROB;
+					}
+	      }
+				else{
+					RES_Stat_Int[current_R_int].Vj = register_file[hold_val1];
+					RES_Stat_Int[current_R_int].Qj = 0;
+				}
+				RES_Stat_Int[current_R_int].res_busy = 1;
+				RES_Stat_Int[current_R_int].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				for(unsigned i = 0; i < instruction_memory.size(); i++){
+					if(instruction_memory[0].remainder_operand1 == instruction_memory[i].branch_array){
+						imm = instruction_memory[i].instr_address;
+						check_branch = 1;
+						RES_Stat_Int[current_R_int].res_A = imm;
+					}
+					else{
+						check_branch = 0;
+					}
+				}
+				RES_Stat_Int[current_R_int].op = INTEGER;
+			}
+
+			break;
+
+		case LW:
+			unsigned hold_val_imm;
+			char *pch;
+			for(int i = 0; i < RES_Stat_Load.size(); i++){
+				if(RES_Stat_Load[i].res_busy!=1){
+					current_R_ld = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed, instruction_memory[0].remainder_operand1.c_str());
+				pch = strtok(operands_needed, " ( ");
+				hold_val_imm = atoi(pch);
+
+				RES_Stat_Load[current_R_ld].res_A = hold_val_imm;
+
+				while(pch != NULL)
+				{
+					hold_val1 = atoi(pch);
+					pch = strtok(NULL," R,( ");
+				}
+
+				if(int_reg_stat[hold_val1].reg_busy){
+	        head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+					}
+	      }
+				else{
+					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+				}
+				RES_Stat_Load[current_R_ld].res_busy = 1;
+				RES_Stat_Load[current_R_ld].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				strcpy(operands_needed, instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+
+				int_reg_stat[hold_val].ROB_num = current_B;
+				int_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Load[current_R_ld].op = MEMORY;
+			}
+			break;
+
+		case LWS:
+			unsigned hold_val_imm1;
+			char *pch1;
+			for(int i = 0; i < RES_Stat_Load.size(); i++){
+				if(RES_Stat_Load[i].res_busy!=1){
+					current_R_ld = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed, instruction_memory[0].remainder_operand1.c_str());
+				pch1 = strtok(operands_needed, " ( ");
+				hold_val_imm1 = atoi(pch1);
+
+				RES_Stat_Load[current_R_ld].res_A = hold_val_imm1;
+
+				while(pch1 != NULL)
+				{
+					hold_val1 = atoi(pch1);
+					pch1 = strtok(NULL," R,( ");
+				}
+				if(int_reg_stat[hold_val1].reg_busy){
+	        head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+					}
+	      }
+
+				else{
+					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+				}
+				RES_Stat_Load[current_R_ld].res_busy = 1;
+				RES_Stat_Load[current_R_ld].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				strcpy(operands_needed, instruction_memory[0].mand_operand.c_str());
+				hold_val = atoi(operands_needed+1);
+
+				float_reg_stat[hold_val].ROB_num = current_B;
+				float_reg_stat[hold_val].reg_busy = 1;
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+
+				strcpy(ROB_table[current_B].rob_dest,operands_needed);
+				RES_Stat_Load[current_R_ld].op = MEMORY;
+			}
+			break;
+
+		case SW:
+			unsigned hold_val_imm2;
+			char *pch2;
+			for(int i = 0; i < RES_Stat_Load.size(); i++){
+				if(RES_Stat_Load[i].res_busy!=1){
+					current_R_ld = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed, instruction_memory[0].remainder_operand1.c_str());
+				pch2 = strtok(operands_needed, " ( ");
+				hold_val_imm2 = atoi(pch2);
+
+				RES_Stat_Load[current_R_ld].res_A = hold_val_imm2;
+
+				while(pch2 != NULL)
+				{
+					hold_val1 = atoi(pch2);
+					pch2 = strtok(NULL," R,( ");
+				}
+
+				if(int_reg_stat[hold_val1].reg_busy){
+	        head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+					}
+	      }
+				else{
+					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+				}
+				RES_Stat_Load[current_R_ld].res_busy = 1;
+				RES_Stat_Load[current_R_ld].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				strcpy(operands_needed, instruction_memory[0].mand_operand.c_str());
+				hold_val2 = atoi(operands_needed+1);
+				if(int_reg_stat[hold_val2].reg_busy){
+					head_ROB = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qk = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qk = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Load[current_R_ld].Vk = register_file[hold_val2];
+					RES_Stat_Load[current_R_ld].Qk = 0;
+				}
+				RES_Stat_Load[current_R_ld].op = MEMORY;
+			}
+			break;
+
+		case SWS:
+			unsigned hold_val_imm3;
+			char *pch3;
+			for(int i = 0; i < RES_Stat_Load.size(); i++){
+				if(RES_Stat_Load[i].res_busy!=1){
+					current_R_ld = i;
+					res_yes = 1;
+					break;
+				}
+				else{
+					res_yes = 0;
+				}
+			}
+			for(int i = 0; i < ROB_table.size(); i++){
+				if(ROB_table[i].rob_busy!=1){
+					current_B = i;
+					rob_yes = 1;
+					break;
+				}
+				else{
+					rob_yes = 0;
+				}
+			}
+
+			if(res_yes == 1 && rob_yes == 1){
+				strcpy(operands_needed, instruction_memory[0].remainder_operand1.c_str());
+				pch3 = strtok(operands_needed, " ( ");
+				hold_val_imm3 = atoi(pch3);
+
+				RES_Stat_Load[current_R_ld].res_A = hold_val_imm3;
+
+				while(pch3 != NULL)
+				{
+					hold_val1 = atoi(pch3);
+					pch3 = strtok(NULL," R,( ");
+				}
+
+				if(int_reg_stat[hold_val1].reg_busy){
+	        head_ROB = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+					}
+	      }
+				else{
+					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+				}
+				RES_Stat_Load[current_R_ld].res_busy = 1;
+				RES_Stat_Load[current_R_ld].res_dest = current_B;
+				ROB_table[current_B].rob_pc = 0;
+
+				strcpy(operands_needed, instruction_memory[0].mand_operand.c_str());
+				hold_val2 = atoi(operands_needed+1);
+				if(float_reg_stat[hold_val2].reg_busy){
+					head_ROB = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[head_ROB].ready){
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[head_ROB].rob_val;
+						RES_Stat_Load[current_R_ld].Qk = 0;
+					}
+					else{
+						RES_Stat_Load[current_R_ld].Qk = head_ROB;
+					}
+				}
+				else{
+					RES_Stat_Load[current_R_ld].Vk = float_reg_file[hold_val2];
+					RES_Stat_Load[current_R_ld].Qk = 0;
+				}
+				RES_Stat_Load[current_R_ld].op = MEMORY;
+			}
   }
+}
+
+void sim_ooo::execute_ins(){
+
 }
 //reset the state of the sim_oooulator
 void sim_ooo::reset(){
