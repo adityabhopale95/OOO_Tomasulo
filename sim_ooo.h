@@ -33,6 +33,7 @@ class sim_ooo{
 	unsigned char *data_memory;
 
 	//memory size in bytes
+	unsigned base_add;
 	unsigned data_memory_size;
 	unsigned register_file[NUM_GP_REGISTERS];
 	float float_reg_file[NUM_FP_REGISTERS];
@@ -48,6 +49,9 @@ class sim_ooo{
 	unsigned branch_cond;
 	unsigned int_struc_hazard;
 	unsigned load_done;
+	unsigned add_struc_hazard;
+	unsigned mul_struc_hazard;
+	unsigned div_struc_hazard;
 
 public:
 
@@ -80,6 +84,13 @@ public:
 	void run(unsigned cycles=0);
 
 	//Issue stage of the Tomasulo's algorithm
+
+	void clear_rob();
+
+	void clear_res();
+
+	void clear_reg();
+
 	void issue();
 
 	//Execute stage of the Tomasulo's algorithm
@@ -89,6 +100,7 @@ public:
 	void write_res();
 
 	void commit_stage();
+
 	//resets the state of the simulator
         /* Note:
 	   - registers should be reset to UNDEFINED value

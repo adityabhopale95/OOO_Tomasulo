@@ -34,7 +34,7 @@ struct ROB_struc{
 };
 
 struct RES_Stat_struc{
-  unsigned res_name;
+  string res_name;
   unsigned res_busy;
   unsigned res_pc;
   int Vj;
@@ -72,7 +72,7 @@ std::map<string, int> opcode_map;
 every_line every_instruct;
 
 ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,INVALID,"",UNDEFINED};
-RES_Stat_struc RES_Temp = {UNDEFINED,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTVALID};
+RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED};
 pack_of_exec execution_structure;
 std::vector<REGISTER_Stat> int_reg_stat;
@@ -174,26 +174,26 @@ sim_ooo::sim_ooo(unsigned mem_size,
     ROB_table.push_back(ROB_tab);
   }
 
+	RES_Temp.res_name = "Int";
   for(unsigned lint = 0; lint < num_int_res_stations; lint++){
-    RES_Temp.res_name = lint + 1;
     RES_Stat_Int.push_back(RES_Temp);
 		int_result.push_back(UNDEFINED);
   }
 
+	RES_Temp.res_name = "Mult";
   for(unsigned lmul = 0; lmul < num_mul_res_stations; lmul++){
-    RES_Temp.res_name = lmul + 1;
     RES_Stat_Mul.push_back(RES_Temp);
 		mul_result.push_back(UNDEFINED);
   }
 
+	RES_Temp.res_name = "Add";
   for(unsigned ladd = 0; ladd < num_add_res_stations; ladd++){
-    RES_Temp.res_name = ladd + 1;
     RES_Stat_Add.push_back(RES_Temp);
 		add_result.push_back(UNDEFINED);
   }
 
+	RES_Temp.res_name = "Load";
   for(unsigned lload = 0; lload < num_load_res_stations; lload++){
-    RES_Temp.res_name = lload + 1;
     RES_Stat_Load.push_back(RES_Temp);
 		mem_result.push_back(UNDEFINED);
   }
@@ -207,6 +207,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
     float_reg_stat[i].reg_busy = 0;
     float_reg_stat[i].ROB_num = UNDEFINED;
   }
+
 }
 
 sim_ooo::~sim_ooo(){
@@ -424,6 +425,7 @@ void sim_ooo::load_program(const char *filename, unsigned base_address){
 }
 
 void sim_ooo::run(unsigned cycles){
+
 }
 
 void sim_ooo::issue(){
@@ -1274,6 +1276,14 @@ void sim_ooo::issue(){
 }
 
 void sim_ooo::execute_ins(){
+	unsigned hold_int;
+	unsigned hold_add;
+	unsigned hold_mul;
+	unsigned hold_div;
+	float temp_adds;
+	float temp_divs;
+	float temp_muls;
+
 	for(unsigned i = 0 ; i < RES_Stat_Int.size(); i++){
 		if(RES_Stat_Int[i].res_busy == 1){
 			if((RES_Stat_Int[i].Qj == 0) && (RES_Stat_Int[i].Qk == 0)){
@@ -1289,7 +1299,6 @@ void sim_ooo::execute_ins(){
 									switch(opcode_map[instruction_memory[RES_Stat_Int[i].op_num].op_code]){
 									case AND:
 											int_result[i] = RES_Stat_Int[i].Vj | RES_Stat_Int[i].Vk;
-//										ROB_table[RES_Stat_Int[i].res_dest].rob_val = RES_Stat_Int[i].Vj | RES_Stat_Int[i].Vk;
 										break;
 
 									case ADD:
@@ -1399,10 +1408,10 @@ void sim_ooo::execute_ins(){
 										RES_Stat_Int[i].if_branch = 1;
 										int_result[i] = RES_Stat_Int[i].res_A;
 										break;
-									}
 
 									default:
 										break;
+									}
 
 									for(unsigned a = 0; a < create_exe_unit.size(); a++){
 										if(create_exe_unit[a].exe_unit == INTEGER){
@@ -1556,12 +1565,12 @@ void sim_ooo::execute_ins(){
 	unsigned sw_check_head;
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy == 1){
-			if((RES_Stat_Load[i].Qi == 0) && (RES_Stat_Load[i].Qk == 0)){
+			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
 				switch(RES_Stat_Load[i].op){
 					case MEMORY:
 						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
 							if(big_mem[sel_ld_unit].status == 1){
-								big_mem[sel_div_unit].status = 0;
+								big_mem[sel_ld_unit].status = 0;
 								if(num_latency_mem[i] > 1){
 									num_latency_mem[i]--;
 								}
@@ -1570,8 +1579,8 @@ void sim_ooo::execute_ins(){
 										case LW:
 										case LWS:
 											for(unsigned iter_ld = i-1; iter_ld > 0; iter_ld--){
-												if((opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num]).op_code] == SW)
-												|| (opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num]).op_code] == SWS)){
+												if((opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num].op_code] == SW)
+												|| (opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num].op_code] == SWS)) {
 													store_check = 1;
 													break;
 												}
@@ -1639,7 +1648,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Int[i].Qj = 0;
 			}
 			if(RES_Stat_Int[i].Qk == b_rob){
-				RES_Stat_Int[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Int[i].Vk = ROB_table[b_rob].rob_val;
 				RES_Stat_Int[i].Qk = 0;
 			}
 			ROB_table[b_rob].ready = 1;
@@ -1653,7 +1662,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Add[i].Qj = 0;
 			}
 			if(RES_Stat_Add[i].Qk == b_rob){
-				RES_Stat_Add[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Add[i].Vk = ROB_table[b_rob].rob_val;
 				RES_Stat_Add[i].Qk = 0;
 			}
 			ROB_table[b_rob].ready = 1;
@@ -1667,7 +1676,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Mul[i].Qj = 0;
 			}
 			if(RES_Stat_Mul[i].Qk == b_rob){
-				RES_Stat_Mul[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Mul[i].Vk = ROB_table[b_rob].rob_val;
 				RES_Stat_Mul[i].Qk = 0;
 			}
 			ROB_table[b_rob].ready = 1;
@@ -1675,7 +1684,7 @@ void sim_ooo::write_res(){
 
 	unsigned if_addr_same;
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code])){
+		switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]){
 			case LW:
 			case LWS:
 				for(unsigned iter_mem = 0; iter_mem < RES_Stat_Load.size(); iter_mem++){
@@ -1695,14 +1704,14 @@ void sim_ooo::write_res(){
 			case SW:
 			case SWS:
 				if(RES_Stat_Load[i].Qk == 0){
-					ROB_table[head_ROB] = RES_Stat_Load[i].Vk;
+					ROB_table[head_ROB].rob_val = RES_Stat_Load[i].Vk;
 				}
 				break;
 		}
 	}
 }
 
-void commit_stage(){
+void sim_ooo::commit_stage(){
 	unsigned d;
 	if(ROB_table[head_ROB].ready == 1){
 		d = ROB_table[head_ROB].rob_dest;
@@ -1731,11 +1740,11 @@ void commit_stage(){
 				break;
 		}
 		ROB_table[head_ROB].rob_busy = 0;
-		if(int_reg_stat[d].ROB_num == h){
+		if(int_reg_stat[d].ROB_num == head_ROB){
 			int_reg_stat[d].reg_busy = 0;
 		}
 
-		if(float_reg_stat[d].ROB_num == h){
+		if(float_reg_stat[d].ROB_num == head_ROB){
 			float_reg_stat[d].reg_busy = 0;
 		}
 	}
@@ -1751,26 +1760,26 @@ void sim_ooo::clear_rob(){
 }
 
 void sim_ooo::clear_res(){
+	RES_Temp.res_name = "Int";
 	for(unsigned lint = 0; lint < num_int_res_stations; lint++){
-    RES_Temp.res_name = lint + 1;
     RES_Stat_Int[lint] = RES_Temp;
 		int_result[lint] = UNDEFINED;
   }
 
+	RES_Temp.res_name = "Mult";
   for(unsigned lmul = 0; lmul < num_mul_res_stations; lmul++){
-		RES_Temp.res_name = lmul + 1;
-    RES_Stat_Mul[lmul] = RES_Temp;
+		RES_Stat_Mul[lmul] = RES_Temp;
 		mul_result[lmul] = UNDEFINED;
   }
 
+	RES_Temp.res_name = "Add";
   for(unsigned ladd = 0; ladd < num_add_res_stations; ladd++){
-		RES_Temp.res_name = ladd + 1;
 		RES_Stat_Add[lint] = RES_Temp;
 		add_result[ladd] = UNDEFINED;
 	}
 
+	RES_Temp.res_name = "Load";
   for(unsigned lload = 0; lload < num_load_res_stations; lload++){
-		RES_Temp.res_name = lload + 1;
 		RES_Stat_Load[lload] = RES_Temp;
 		add_result[lload] = UNDEFINED;
 	}
@@ -1856,8 +1865,39 @@ void sim_ooo::print_registers(){
 void sim_ooo::print_rob(){
 	cout << "REORDER BUFFER" << endl;
 	cout << setfill(' ') << setw(5) << "Entry" << setw(6) << "Busy" << setw(7) << "Ready" << setw(12) << "PC" << setw(10) << "State" << setw(6) << "Dest" << setw(12) << "Value" << endl;
-
 	//fill here
+	for(unsigned i = 0; i < ROB_table.size(); i++){
+		std::cout << setfill(' ') << setw(5) << (i+1);
+		(ROB_table[i].rob_busy)?std::cout << setw(6) << "yes":std::cout << setw(6) << "no";
+		(ROB_table[i].ready)?std::cout << setw(7) << "yes":std::cout << setw(7) << "no";
+		if(ROB_table[i].state == INVALID){
+			std::cout << setw(12) << "-";
+		}
+		else{
+			std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << ROB_table[i].rob_pc;
+		}
+		switch (ROB_table[i].state) {
+			case ISSUE:
+				std::cout << setfill(' ') << setw(10) << "ISSUE";
+				break;
+			case EXECUTE:
+				std::cout << setfill(' ') << setw(10) << "EXE";
+				break;
+			case WRITE_RESULT:
+				std::cout << setfill(' ') << setw(10) << "WR";
+				break;
+			case COMMIT:
+				std::cout << setfill(' ') << setw(10) << "-";
+				break;
+			case INVALID:
+				std::cout << setfill(' ') << setw(10) << "-";
+				break;
+		}
+		if(ROB_table[i].state == INVALID)std::cout << setw(6) << "-";
+		else std::cout << setfill(' ') << setw(5) << "F" << ROB_table[i].rob_dest;
+		if(ROB_table[i].state == WRITE_RESULT)std::cout << setw(12) << ROB_table[i].rob_val << '\n';
+		else std::cout << setw(12) << "-" << '\n';
+	}
 
 	cout << endl;
 }
@@ -1868,6 +1908,81 @@ void sim_ooo::print_reservation_stations(){
 	cout << setw(7) << "Name" << setw(6) << "Busy" << setw(12) << "PC" << setw(12) << "Vj" << setw(12) << "Vk" << setw(6) << "Qj" << setw(6) << "Qk" << setw(6) << "Dest" << setw(12) << "Address" << endl;
 
 	// fill here
+	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
+		std::cout << setfill(' ') << setw(6) << RES_Stat_Int[i].res_name << (i+1);
+		if(RES_Stat_Int[i].res_busy == 1)std::cout << setw(6) << "YES";
+		else std::cout << setw(6) << "NO";
+		if(RES_Stat_Int[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].res_pc;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Vj!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].Vj;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Vk!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].Vk;
+		else std::cout << setfill(' ') << setw(12) << "-";
+		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Int[i].Qj;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Qk!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Int[i].Qk;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if(RES_Stat_Int[i].res_busy == 1)std::cout << setw(6) << RES_Stat_Int[i].res_dest;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		std::cout << setfill(' ') << setw(12) << "-" << '\n';
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		std::cout << setfill(' ') << setw(6) << RES_Stat_Mul[i].res_name << (i+1);
+		if(RES_Stat_Load[i].res_busy == 1)std::cout << setw(6) << "YES";
+		else std::cout << setw(6) << "NO";
+		if(RES_Stat_Load[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].res_pc;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Vj!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].Vj;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Vk!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].Vk;
+		else std::cout << setfill(' ') << setw(12) << "-";
+		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Load[i].Qj;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Qk!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Load[i].Qk;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if(RES_Stat_Load[i].res_busy == 1)std::cout << setw(6) << RES_Stat_Load[i].res_dest;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		std::cout << setfill(' ') << setw(12) << "-" << '\n';
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
+		std::cout << setfill(' ') << setw(6) << RES_Stat_Add[i].res_name << (i+1);
+		if(RES_Stat_Add[i].res_busy == 1)std::cout << setw(6) << "YES";
+		else std::cout << setw(6) << "NO";
+		if(RES_Stat_Add[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].res_pc;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Vj!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].Vj;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Vk!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].Vk;
+		else std::cout << setfill(' ') << setw(12) << "-";
+		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Add[i].Qj;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Qk!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Add[i].Qk;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if(RES_Stat_Add[i].res_busy == 1)std::cout << setw(6) << RES_Stat_Add[i].res_dest;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		std::cout << setfill(' ') << setw(12) << "-" << '\n';
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
+		std::cout << setfill(' ') << setw(6) << RES_Stat_Mul[i].res_name << (i+1);
+		if(RES_Stat_Mul[i].res_busy == 1)std::cout << setw(6) << "YES";
+		else std::cout << setw(6) << "NO";
+		if(RES_Stat_Mul[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].res_pc;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Vj!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].Vj;
+		else std::cout << setw(12) << "-";
+		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Vk!=0))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].Vk;
+		else std::cout << setfill(' ') << setw(12) << "-";
+		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Mul[i].Qj;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Qk!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Mul[i].Qk;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		if(RES_Stat_Mul[i].res_busy == 1)std::cout << setw(6) << RES_Stat_Mul[i].res_dest;
+		else std::cout << setfill(' ') << setw(6) << "-";
+		std::cout << setfill(' ') << setw(12) << "-" << '\n';
+	}
 
 	cout << endl;
 }
