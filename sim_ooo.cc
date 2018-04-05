@@ -27,6 +27,7 @@ struct ROB_struc{
   unsigned rob_busy;
   unsigned ready;
   unsigned rob_pc;
+	unsigned if_branch_rob;
   stage_t state;
   char rob_dest[10];
   unsigned rob_val;
@@ -42,6 +43,8 @@ struct RES_Stat_struc{
   unsigned Qk;
   unsigned res_dest;
   unsigned res_A;
+	unsigned op_num;
+	unsigned if_branch;
 	exe_unit_t op;
 };
 
@@ -64,10 +67,12 @@ struct pack_of_exec
 	unsigned instance_exe;
 };
 
+std::map<string, int> opcode_map;
+
 every_line every_instruct;
 
-ROB_struc ROB_tab = {1,0,0,UNDEFINED,INVALID,"",UNDEFINED};
-RES_Stat_struc RES_Temp = {UNDEFINED,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTVALID};
+ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,INVALID,"",UNDEFINED};
+RES_Stat_struc RES_Temp = {UNDEFINED,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED};
 pack_of_exec execution_structure;
 std::vector<REGISTER_Stat> int_reg_stat;
@@ -81,7 +86,10 @@ std::vector<RES_Stat_struc> RES_Stat_Int;
 std::vector<RES_Stat_struc> RES_Stat_Load;
 std::vector<RES_Stat_struc> RES_Stat_Mul;
 std::vector<RES_Stat_struc> RES_Stat_Add;
-
+std::vector<int> int_result;
+std::vector<int> add_result;
+std::vector<int> mul_result;
+std::vector<int> mem_result;
 std::vector<ROB_struc> ROB_table;
 
 std::vector<exe_struc> big_int;
@@ -103,8 +111,6 @@ std::vector<int> num_latency_mem;
 static const char *stage_names[NUM_STAGES] = {"ISSUE", "EXE", "WR", "COMMIT"};
 static const char *opcode_name[NUM_OPCODES] = {"LW", "SW", "ADD", "ADDI", "SUB", "SUBI", "XOR", "XORI", "OR", "ORI", "AND", "ANDI", "MULT", "DIV", "BEQZ", "BNEZ", "BLTZ", "BGTZ", "BLEZ", "BGEZ", "JUMP", "EOP", "LWS", "SWS", "ADDS", "SUBS", "MULTS", "DIVS"};
 static const char *res_station_names[5]={"Int", "Add", "Mult", "Load"};
-
-std::map<string, int> opcode_map;
 
 /* convert a float into an unsigned */
 inline unsigned float2unsigned(float value){
@@ -144,7 +150,9 @@ sim_ooo::sim_ooo(unsigned mem_size,
 	data_memory_size = mem_size;
 	data_memory = new unsigned char[data_memory_size];
   //fill here
-
+	for (unsigned a = 0; a < NUM_OPCODES; a++){
+			opcode_map[opcode_name[a]] = a;
+	}
 
   for(unsigned i = 0; i < NUM_GP_REGISTERS; i++){     //initializing integer registers
 		register_file[i] = UNDEFINED;
@@ -169,21 +177,25 @@ sim_ooo::sim_ooo(unsigned mem_size,
   for(unsigned lint = 0; lint < num_int_res_stations; lint++){
     RES_Temp.res_name = lint + 1;
     RES_Stat_Int.push_back(RES_Temp);
+		int_result.push_back(UNDEFINED);
   }
 
   for(unsigned lmul = 0; lmul < num_mul_res_stations; lmul++){
     RES_Temp.res_name = lmul + 1;
     RES_Stat_Mul.push_back(RES_Temp);
+		mul_result.push_back(UNDEFINED);
   }
 
   for(unsigned ladd = 0; ladd < num_add_res_stations; ladd++){
     RES_Temp.res_name = ladd + 1;
     RES_Stat_Add.push_back(RES_Temp);
+		add_result.push_back(UNDEFINED);
   }
 
   for(unsigned lload = 0; lload < num_load_res_stations; lload++){
     RES_Temp.res_name = lload + 1;
     RES_Stat_Load.push_back(RES_Temp);
+		mem_result.push_back(UNDEFINED);
   }
 
   int_reg_stat.resize(NUM_GP_REGISTERS);
@@ -431,7 +443,7 @@ void sim_ooo::issue(){
   	case SUB:
   	case OR:
   	case AND:
-			for(int i = 0; i < RES_Stat_Int.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
 				if(RES_Stat_Int[i].res_busy!=1){
 					current_R_int = i;
 					res_yes = 1;
@@ -441,7 +453,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -494,12 +506,13 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Int[current_R_int].op = INTEGER;
+				RES_Stat_Int[current_R_int].op_num = 0;
 			}
 
 			break;
 
 		case MULT:
-			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
 				if(RES_Stat_Mul[i].res_busy!=1){
 					current_R_mul = i;
 					res_yes = 1;
@@ -509,7 +522,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -562,12 +575,13 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+				RES_Stat_Mul[current_R_mul].op_num = 0;
 			}
 
 			break;
 
 		case DIV:
-			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
 				if(RES_Stat_Mul[i].res_busy!=1){
 					current_R_mul = i;
 					res_yes = 1;
@@ -577,7 +591,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -630,6 +644,7 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Mul[current_R_mul].op = DIVIDER;
+				RES_Stat_Mul[current_R_mul].op_num = 0;
 			}
 
 			break;
@@ -640,7 +655,7 @@ void sim_ooo::issue(){
 		case ORI:
 		case ANDI:
 			char *endptr;
-			for(int i = 0; i < RES_Stat_Int.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
 				if(RES_Stat_Int[i].res_busy!=1){
 					current_R_int = i;
 					res_yes = 1;
@@ -650,7 +665,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -685,6 +700,7 @@ void sim_ooo::issue(){
 				strcpy(operands_needed,instruction_memory[0].remainder_operand2.c_str());
 				imm = strtoul(operands_needed, &endptr, 0);
 				RES_Stat_Int[current_R_int].res_A = imm;
+				RES_Stat_Int[current_R_int].Qk = 0;
 
 				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
 				hold_val = atoi(operands_needed+1);
@@ -692,13 +708,14 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Int[current_R_int].op = INTEGER;
+				RES_Stat_Int[current_R_int].op_num = 0;
 			}
 
 			break;
 
 		case ADDS:
 		case SUBS:
-			for(int i = 0; i < RES_Stat_Add.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
 				if(RES_Stat_Add[i].res_busy!=1){
 					current_R_add = i;
 					res_yes = 1;
@@ -708,7 +725,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -735,7 +752,7 @@ void sim_ooo::issue(){
 					}
 	      }
 				else{
-					RES_Stat_Add[current_R_add].Vj = float_reg_file[hold_val1];
+					RES_Stat_Add[current_R_add].Vj = float2unsigned(float(float_reg_file[hold_val1]));
 					RES_Stat_Add[current_R_add].Qj = 0;
 				}
 				RES_Stat_Add[current_R_add].res_busy = 1;
@@ -753,7 +770,7 @@ void sim_ooo::issue(){
 					}
 				}
 				else{
-					RES_Stat_Add[current_R_add].Vk = float_reg_file[hold_val2];
+					RES_Stat_Add[current_R_add].Vk = float2unsigned(float(float_reg_file[hold_val2]));
 					RES_Stat_Add[current_R_add].Qk = 0;
 				}
 
@@ -763,11 +780,12 @@ void sim_ooo::issue(){
 				float_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Add[current_R_add].op = ADDER;
+				RES_Stat_Add[current_R_add].op_num = 0;
 			}
 			break;
 
 		case MULTS:
-			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
 				if(RES_Stat_Mul[i].res_busy!=1){
 					current_R_mul = i;
 					res_yes = 1;
@@ -777,7 +795,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -804,7 +822,7 @@ void sim_ooo::issue(){
 					}
 				}
 				else{
-					RES_Stat_Mul[current_R_mul].Vj = float_reg_file[hold_val1];
+					RES_Stat_Mul[current_R_mul].Vj = float2unsigned(float(float_reg_file[hold_val1]));
 					RES_Stat_Mul[current_R_mul].Qj = 0;
 				}
 				RES_Stat_Mul[current_R_mul].res_busy = 1;
@@ -822,7 +840,7 @@ void sim_ooo::issue(){
 					}
 				}
 				else{
-					RES_Stat_Mul[current_R_mul].Vk = float_reg_file[hold_val2];
+					RES_Stat_Mul[current_R_mul].Vk = float2unsigned(float(float_reg_file[hold_val2]));
 					RES_Stat_Mul[current_R_mul].Qk = 0;
 				}
 				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
@@ -831,12 +849,13 @@ void sim_ooo::issue(){
 				float_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+				RES_Stat_Mul[current_R_mul].op_num = 0;
 			}
 
 			break;
 
 		case DIVS:
-			for(int i = 0; i < RES_Stat_Mul.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
 				if(RES_Stat_Mul[i].res_busy!=1){
 					current_R_mul = i;
 					res_yes = 1;
@@ -846,7 +865,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -873,7 +892,7 @@ void sim_ooo::issue(){
 					}
 				}
 				else{
-					RES_Stat_Mul[current_R_mul].Vj = float_reg_file[hold_val1];
+					RES_Stat_Mul[current_R_mul].Vj = float2unsigned(float(float_reg_file[hold_val1]));
 					RES_Stat_Mul[current_R_mul].Qj = 0;
 				}
 				RES_Stat_Mul[current_R_mul].res_busy = 1;
@@ -891,7 +910,7 @@ void sim_ooo::issue(){
 					}
 				}
 				else{
-					RES_Stat_Mul[current_R_mul].Vk = float_reg_file[hold_val2];
+					RES_Stat_Mul[current_R_mul].Vk = float2unsigned(float(float_reg_file[hold_val2]));
 					RES_Stat_Mul[current_R_mul].Qk = 0;
 				}
 				strcpy(operands_needed,instruction_memory[0].mand_operand.c_str());
@@ -900,6 +919,7 @@ void sim_ooo::issue(){
 				float_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+				RES_Stat_Mul[current_R_mul].op_num = 0;
 			}
 
 			break;
@@ -910,7 +930,7 @@ void sim_ooo::issue(){
 		case BGTZ:
 		case BLEZ:
 		case BGEZ:
-			for(int i = 0; i < RES_Stat_Int.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
 				if(RES_Stat_Int[i].res_busy!=1){
 					current_R_int = i;
 					res_yes = 1;
@@ -920,7 +940,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -962,6 +982,7 @@ void sim_ooo::issue(){
 					}
 				}
 				RES_Stat_Int[current_R_int].op = INTEGER;
+				RES_Stat_Int[current_R_int].op_num = 0;
 			}
 
 			break;
@@ -969,7 +990,7 @@ void sim_ooo::issue(){
 		case LW:
 			unsigned hold_val_imm;
 			char *pch;
-			for(int i = 0; i < RES_Stat_Load.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 				if(RES_Stat_Load[i].res_busy!=1){
 					current_R_ld = i;
 					res_yes = 1;
@@ -979,7 +1000,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -1028,13 +1049,14 @@ void sim_ooo::issue(){
 				int_reg_stat[hold_val].reg_busy = 1;
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Load[current_R_ld].op = MEMORY;
+				RES_Stat_Load[current_R_ld].op_num = 0;
 			}
 			break;
 
 		case LWS:
 			unsigned hold_val_imm1;
 			char *pch1;
-			for(int i = 0; i < RES_Stat_Load.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 				if(RES_Stat_Load[i].res_busy!=1){
 					current_R_ld = i;
 					res_yes = 1;
@@ -1044,7 +1066,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -1094,13 +1116,14 @@ void sim_ooo::issue(){
 
 				strcpy(ROB_table[current_B].rob_dest,operands_needed);
 				RES_Stat_Load[current_R_ld].op = MEMORY;
+				RES_Stat_Load[current_R_ld].op_num = 0;
 			}
 			break;
 
 		case SW:
 			unsigned hold_val_imm2;
 			char *pch2;
-			for(int i = 0; i < RES_Stat_Load.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 				if(RES_Stat_Load[i].res_busy!=1){
 					current_R_ld = i;
 					res_yes = 1;
@@ -1110,7 +1133,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -1169,13 +1192,14 @@ void sim_ooo::issue(){
 					RES_Stat_Load[current_R_ld].Qk = 0;
 				}
 				RES_Stat_Load[current_R_ld].op = MEMORY;
+				RES_Stat_Load[current_R_ld].op_num = 0;
 			}
 			break;
 
 		case SWS:
 			unsigned hold_val_imm3;
 			char *pch3;
-			for(int i = 0; i < RES_Stat_Load.size(); i++){
+			for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 				if(RES_Stat_Load[i].res_busy!=1){
 					current_R_ld = i;
 					res_yes = 1;
@@ -1185,7 +1209,7 @@ void sim_ooo::issue(){
 					res_yes = 0;
 				}
 			}
-			for(int i = 0; i < ROB_table.size(); i++){
+			for(unsigned i = 0; i < ROB_table.size(); i++){
 				if(ROB_table[i].rob_busy!=1){
 					current_B = i;
 					rob_yes = 1;
@@ -1244,14 +1268,523 @@ void sim_ooo::issue(){
 					RES_Stat_Load[current_R_ld].Qk = 0;
 				}
 				RES_Stat_Load[current_R_ld].op = MEMORY;
+				RES_Stat_Load[current_R_ld].op_num = 0;
 			}
   }
 }
 
 void sim_ooo::execute_ins(){
+	for(unsigned i = 0 ; i < RES_Stat_Int.size(); i++){
+		if(RES_Stat_Int[i].res_busy == 1){
+			if((RES_Stat_Int[i].Qj == 0) && (RES_Stat_Int[i].Qk == 0)){
+				switch (RES_Stat_Int[i].op) {
+					case INTEGER:
+						for(unsigned sel_int_unit = 0; sel_int_unit < big_int.size(); sel_int_unit++){
+							if(big_int[sel_int_unit].status == 1){
+								big_int[sel_int_unit].status = 0;
+								if(num_latency_int[i] > 1){
+									num_latency_int[i]--;
+								}
+								else{
+									switch(opcode_map[instruction_memory[RES_Stat_Int[i].op_num].op_code]){
+									case AND:
+											int_result[i] = RES_Stat_Int[i].Vj | RES_Stat_Int[i].Vk;
+//										ROB_table[RES_Stat_Int[i].res_dest].rob_val = RES_Stat_Int[i].Vj | RES_Stat_Int[i].Vk;
+										break;
 
+									case ADD:
+										int_result[i] = RES_Stat_Int[i].Vj + RES_Stat_Int[i].Vk;
+										break;
+
+									case OR:
+										int_result[i] = RES_Stat_Int[i].Vj | RES_Stat_Int[i].Vk;
+										break;
+
+									case XOR:
+										int_result[i] = RES_Stat_Int[i].Vj ^ RES_Stat_Int[i].Vk;
+										break;
+
+									case SUB:
+										int_result[i] = RES_Stat_Int[i].Vj - RES_Stat_Int[i].Vk;
+										break;
+
+									case ADDI:
+										int_result[i] = RES_Stat_Int[i].Vj + RES_Stat_Int[i].res_A;
+										break;
+
+									case SUBI:
+										int_result[i] = RES_Stat_Int[i].Vj - RES_Stat_Int[i].res_A;
+										break;
+
+									case XORI:
+										int_result[i] = RES_Stat_Int[i].Vj ^ RES_Stat_Int[i].res_A;
+										break;
+
+									case ORI:
+										int_result[i] = RES_Stat_Int[i].Vj | RES_Stat_Int[i].res_A;
+										break;
+
+									case ANDI:
+										int_result[i] = RES_Stat_Int[i].Vj & RES_Stat_Int[i].res_A;
+										break;
+
+									case BEQZ:
+										if(RES_Stat_Int[i].Vj == 0){
+											RES_Stat_Int[i].if_branch = 1;
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											branch_cond = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case BNEZ:
+										if(RES_Stat_Int[i].Vj != 0){
+											RES_Stat_Int[i].if_branch = 1;
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											branch_cond = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case BLTZ:
+										if(RES_Stat_Int[i].Vj < 0){
+											RES_Stat_Int[i].if_branch = 1;
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case BGTZ:
+										if(RES_Stat_Int[i].Vj > 0){
+											RES_Stat_Int[i].if_branch = 1;
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case BLEZ:
+										if(RES_Stat_Int[i].Vj <= 0){
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case BGEZ:
+										if(RES_Stat_Int[i].Vj >= 0){
+											RES_Stat_Int[i].if_branch = 1;
+											int_result[i] = RES_Stat_Int[i].res_A;
+										}
+										else{
+											RES_Stat_Int[i].if_branch = 0;
+											int_result[i] = 4;
+										}
+										break;
+
+									case JUMP:
+										RES_Stat_Int[i].if_branch = 1;
+										int_result[i] = RES_Stat_Int[i].res_A;
+										break;
+									}
+
+									default:
+										break;
+
+									for(unsigned a = 0; a < create_exe_unit.size(); a++){
+										if(create_exe_unit[a].exe_unit == INTEGER){
+											hold_int = a;
+										}
+									}
+
+									num_latency_int[i] = create_exe_unit[hold_int].latency_exe;
+									big_int[i].status = 1;
+								}
+								break;
+							}
+							else{
+								int_struc_hazard = 1;
+							}
+						}
+						break;
+
+					default:
+						break;
+				}
+			}
+		}
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
+		if(RES_Stat_Add[i].res_busy == 1){
+			if((RES_Stat_Add[i].Qj == 0) && (RES_Stat_Add[i].Qk == 0)){
+				switch (RES_Stat_Add[i].op){
+					case ADDER:
+						for(unsigned sel_add_unit = 0; sel_add_unit < big_add.size(); sel_add_unit++){
+							if(big_add[sel_add_unit].status == 1){
+								big_add[sel_add_unit].status = 0;
+								if(num_latency_add[i] > 1){
+									num_latency_add[i]--;
+								}
+								else{
+									switch (opcode_map[instruction_memory[RES_Stat_Add[i].op_num].op_code]) {
+										case ADDS:
+											temp_adds = unsigned2float(RES_Stat_Add[i].Vj) + unsigned2float(RES_Stat_Add[i].Vk);
+											add_result[i] = float2unsigned(float(temp_adds));
+											break;
+
+										case SUBS:
+											temp_adds = unsigned2float(RES_Stat_Add[i].Vj) - unsigned2float(RES_Stat_Add[i].Vk);
+											add_result[i] = float2unsigned(float(temp_adds));
+											break;
+									}
+									for(unsigned a = 0; a < create_exe_unit.size(); a++){
+										if(create_exe_unit[a].exe_unit == INTEGER){
+											hold_add = a;
+										}
+									}
+									num_latency_add[i] = create_exe_unit[hold_add].latency_exe;
+									big_add[i].status = 1;
+								}
+								break;
+							}
+							else{
+								add_struc_hazard = 1;
+							}
+						}
+						break;
+
+					default:
+						break;
+				}
+			}
+		}
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
+		if(RES_Stat_Mul[i].res_busy == 1){
+			if((RES_Stat_Mul[i].Qj == 0) && (RES_Stat_Mul[i].Qk == 0)){
+				switch (RES_Stat_Mul[i].op) {
+					case MULTIPLIER:
+						for(unsigned sel_mul_unit = 0; sel_mul_unit < big_mul.size(); sel_mul_unit++){
+							if(big_mul[sel_mul_unit].status == 1){
+								big_mul[sel_mul_unit].status = 0;
+								if(num_latency_mul[i] > 1){
+									num_latency_mul[i]--;
+								}
+								else{
+									switch (opcode_map[instruction_memory[RES_Stat_Mul[i].op_num].op_code]) {
+										case MULT:
+											mul_result[i] = RES_Stat_Mul[i].Vj * RES_Stat_Mul[i].Vk;
+											break;
+
+										case MULTS:
+											temp_muls = float2unsigned(float(RES_Stat_Mul[i].Vj)) + float2unsigned(float(RES_Stat_Mul[i].Vk));
+											mul_result[i] = unsigned2float(temp_muls);
+											break;
+									}
+									for(unsigned a = 0; a < create_exe_unit.size(); a++){
+										if(create_exe_unit[a].exe_unit == MULTIPLIER){
+											hold_mul = a;
+										}
+									}
+									num_latency_mul[i] = create_exe_unit[hold_mul].latency_exe;
+									big_add[i].status = 1;
+								}
+								break;
+							}
+							else{
+								mul_struc_hazard = 1;
+							}
+						}
+						break;
+
+					case DIVIDER:
+						for(unsigned sel_div_unit = 0; sel_div_unit < big_div.size(); sel_div_unit++){
+							if(big_div[sel_div_unit].status == 1){
+								big_div[sel_div_unit].status = 0;
+								if(num_latency_div[i] > 1){
+									num_latency_div[i]--;
+								}
+								else{
+									switch (opcode_map[instruction_memory[RES_Stat_Mul[i].op_num].op_code]) {
+										case DIV:
+											mul_result[i] = RES_Stat_Mul[i].Vj / RES_Stat_Mul[i].Vk;
+											break;
+
+										case DIVS:
+											temp_divs = float2unsigned(float(RES_Stat_Mul[i].Vj)) / float2unsigned(float(RES_Stat_Mul[i].Vk));
+											mul_result[i] = unsigned2float(temp_divs);
+											break;
+									}
+									for(unsigned a = 0; a < create_exe_unit.size(); a++){
+										if(create_exe_unit[a].exe_unit == DIVIDER){
+											hold_div = a;
+										}
+									}
+									num_latency_div[i] = create_exe_unit[hold_div].latency_exe;
+									big_div[i].status = 1;
+								}
+								break;
+							}
+							else{
+								div_struc_hazard = 1;
+							}
+						}
+						break;
+
+					default:
+						break;
+				}
+			}
+		}
+	}
+	unsigned store_check;
+	unsigned sw_check_head;
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(RES_Stat_Load[i].res_busy == 1){
+			if((RES_Stat_Load[i].Qi == 0) && (RES_Stat_Load[i].Qk == 0)){
+				switch(RES_Stat_Load[i].op){
+					case MEMORY:
+						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+							if(big_mem[sel_ld_unit].status == 1){
+								big_mem[sel_div_unit].status = 0;
+								if(num_latency_mem[i] > 1){
+									num_latency_mem[i]--;
+								}
+								else{
+									switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+										case LW:
+										case LWS:
+											for(unsigned iter_ld = i-1; iter_ld > 0; iter_ld--){
+												if((opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num]).op_code] == SW)
+												|| (opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num]).op_code] == SWS)){
+													store_check = 1;
+													break;
+												}
+												else{
+													store_check = 0;
+												}
+											}
+											if((RES_Stat_Load[i].Qj == 0) && (store_check != 1)){
+												RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+												load_done = 1;
+											}
+											break;
+
+										case SWS:
+										case SW:
+											if((opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SW)
+											||(opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SWS)){
+												sw_check_head = 1;
+											}
+											else{
+												sw_check_head = 0;
+											}
+											if((RES_Stat_Load[i].Qj == 0) && (sw_check_head == 1)){
+												mem_result[i] = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+											}
+											break;
+									}
+								}
+							}
+						}
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+}
+
+void sim_ooo::write_res(){
+	unsigned b_rob;
+
+	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
+		ROB_table[RES_Stat_Int[i].res_dest].rob_val = int_result[i];
+		ROB_table[RES_Stat_Int[i].res_dest].if_branch_rob = RES_Stat_Int[i].if_branch;
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
+		ROB_table[RES_Stat_Add[i].res_dest].rob_val = add_result[i];
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
+		ROB_table[RES_Stat_Mul[i].res_dest].rob_val = mul_result[i];
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		ROB_table[RES_Stat_Load[i].res_dest].rob_val = mem_result[i];
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
+			b_rob = RES_Stat_Int[i].res_dest;
+			RES_Stat_Int[i].res_busy = 0;
+			if(RES_Stat_Int[i].Qj == b_rob){
+				RES_Stat_Int[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Int[i].Qj = 0;
+			}
+			if(RES_Stat_Int[i].Qk == b_rob){
+				RES_Stat_Int[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Int[i].Qk = 0;
+			}
+			ROB_table[b_rob].ready = 1;
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
+			b_rob = RES_Stat_Add[i].res_dest;
+			RES_Stat_Add[i].res_busy = 0;
+			if(RES_Stat_Add[i].Qj == b_rob){
+				RES_Stat_Add[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Add[i].Qj = 0;
+			}
+			if(RES_Stat_Add[i].Qk == b_rob){
+				RES_Stat_Add[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Add[i].Qk = 0;
+			}
+			ROB_table[b_rob].ready = 1;
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
+			b_rob = RES_Stat_Mul[i].res_dest;
+			RES_Stat_Mul[i].res_busy = 0;
+			if(RES_Stat_Mul[i].Qj == b_rob){
+				RES_Stat_Mul[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Mul[i].Qj = 0;
+			}
+			if(RES_Stat_Mul[i].Qk == b_rob){
+				RES_Stat_Mul[i].Vk = ROB_table[b_rob].val;
+				RES_Stat_Mul[i].Qk = 0;
+			}
+			ROB_table[b_rob].ready = 1;
+	}
+
+	unsigned if_addr_same;
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code])){
+			case LW:
+			case LWS:
+				for(unsigned iter_mem = 0; iter_mem < RES_Stat_Load.size(); iter_mem++){
+					if(mem_result[iter_mem] == RES_Stat_Load[i].res_A){
+						if_addr_same = 1;
+						break;
+					}
+					else{
+						if_addr_same = 0;
+					}
+				}
+				if((load_done == 1) && (if_addr_same!=1)){
+					ROB_table[RES_Stat_Load[i].res_dest].rob_val = char2unsigned(RES_Stat_Load[i].res_A);
+				}
+				break;
+
+			case SW:
+			case SWS:
+				if(RES_Stat_Load[i].Qk == 0){
+					ROB_table[head_ROB] = RES_Stat_Load[i].Vk;
+				}
+				break;
+		}
+	}
+}
+
+void commit_stage(){
+	unsigned d;
+	if(ROB_table[head_ROB].ready == 1){
+		d = ROB_table[head_ROB].rob_dest;
+		switch(opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc]]){
+			case BEQZ:
+			case BNEZ:
+			case BLTZ:
+			case BGTZ:
+			case BLEZ:
+			case BGEZ:
+				if(ROB_table[head_ROB].if_branch_rob == 0){
+					current_PC = ROB_table[head_ROB].rob_val;
+					clear_rob();
+					clear_res();
+					clear_reg();
+				}
+				break;
+
+			case SW:
+			case SWS:
+				unsigned2char(ROB_table[head_ROB].rob_val,&data_memory[ROB_table[head_ROB].rob_dest]);
+				break;
+
+			default:
+				int_reg_stat[d] = ROB_table[head_ROB].rob_val;
+				break;
+		}
+		ROB_table[head_ROB].rob_busy = 0;
+		if(int_reg_stat[d].ROB_num == h){
+			int_reg_stat[d].reg_busy = 0;
+		}
+
+		if(float_reg_stat[d].ROB_num == h){
+			float_reg_stat[d].reg_busy = 0;
+		}
+	}
 }
 //reset the state of the sim_oooulator
+
+void sim_ooo::clear_rob(){
+	for(unsigned a = 0; a < rob_size; a++){           //initializing ROB
+		ROB_tab.entry = a+1;
+		ROB_table[a] = ROB_tab;
+		head_ROB = 0;
+	}
+}
+
+void sim_ooo::clear_res(){
+	for(unsigned lint = 0; lint < num_int_res_stations; lint++){
+    RES_Temp.res_name = lint + 1;
+    RES_Stat_Int[lint] = RES_Temp;
+		int_result[lint] = UNDEFINED;
+  }
+
+  for(unsigned lmul = 0; lmul < num_mul_res_stations; lmul++){
+		RES_Temp.res_name = lmul + 1;
+    RES_Stat_Mul[lmul] = RES_Temp;
+		mul_result[lmul] = UNDEFINED;
+  }
+
+  for(unsigned ladd = 0; ladd < num_add_res_stations; ladd++){
+		RES_Temp.res_name = ladd + 1;
+		RES_Stat_Add[lint] = RES_Temp;
+		add_result[ladd] = UNDEFINED;
+	}
+
+  for(unsigned lload = 0; lload < num_load_res_stations; lload++){
+		RES_Temp.res_name = lload + 1;
+		RES_Stat_Load[lload] = RES_Temp;
+		add_result[lload] = UNDEFINED;
+	}
+}
+
+void sim_ooo::clear_reg(){
+	for(unsigned i = 0; i < NUM_GP_REGISTERS; i++){
+    int_reg_stat[i].reg_busy = 0;
+    int_reg_stat[i].ROB_num = UNDEFINED;
+    float_reg_stat[i].reg_busy = 0;
+    float_reg_stat[i].ROB_num = UNDEFINED;
+  }
+}
+
 void sim_ooo::reset(){
 }
 

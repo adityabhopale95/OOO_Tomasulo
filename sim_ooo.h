@@ -45,6 +45,9 @@ class sim_ooo{
 	unsigned current_R_ld;
 	unsigned current_B;
 	unsigned check_branch;
+	unsigned branch_cond;
+	unsigned int_struc_hazard;
+	unsigned load_done;
 
 public:
 
@@ -81,6 +84,11 @@ public:
 
 	//Execute stage of the Tomasulo's algorithm
 	void execute_ins();
+
+	//Write result stage of the Tomasulo's algorithm
+	void write_res();
+
+	void commit_stage();
 	//resets the state of the simulator
         /* Note:
 	   - registers should be reset to UNDEFINED value
