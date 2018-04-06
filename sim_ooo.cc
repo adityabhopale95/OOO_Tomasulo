@@ -215,6 +215,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
   }
 	head_ROB = 0;
 	issue_success = 1;
+	num_cycles = 0;
 }
 
 sim_ooo::~sim_ooo(){
@@ -433,16 +434,29 @@ void sim_ooo::load_program(const char *filename, unsigned base_address){
 
 void sim_ooo::run(unsigned cycles){
 	unsigned PC_index;
-/*	for(int i = 0; i < issue_size; i++){
-		PC_index = (current_PC - base_add)/4;
-		issue(PC_index);
-		if(issue_success == 1){
-			current_PC = current_PC + 4;
+	if(cycles!=0){
+		while (cycles!=0) {
+			num_cycles++;
+
+			commit_stage();
+
+			write_res();
+
+			execute_ins();
+
+			for(int i = 0; i < issue_size; i++){
+				PC_index = (current_PC - base_add)/4;
+				issue(PC_index);
+				if(issue_success == 1){
+					current_PC = current_PC + 4;
+				}
+				else{
+					break;
+				}
+			}
+			cycles--;
 		}
-		else{
-			break;
-		}
-	}*/
+	}
 }
 
 void sim_ooo::issue(unsigned temp_PC){
@@ -459,15 +473,28 @@ void sim_ooo::issue(unsigned temp_PC){
 	unsigned res_yes_load;
 	unsigned res_yes_add;
 	unsigned imm;
-
-	for(unsigned i = 0; i < ROB_table.size(); i++){
+	unsigned h_val;
+	for(unsigned i = head_ROB; i < ROB_table.size(); i++){
 		if(ROB_table[i].rob_busy!=1){
-			current_B = i+1;
+			current_B = i;
 			rob_yes = 1;
 			break;
 		}
 		else{
 			rob_yes = 0;
+		}
+	}
+
+	if(rob_yes == 0){
+		for(unsigned j = 0; j < head_ROB; j++){
+			if(ROB_table[j].rob_busy != 1){
+				current_B = j;
+				rob_yes = 1;
+				break;
+			}
+			else{
+				rob_yes = 0;
+			}
 		}
 	}
 
@@ -528,13 +555,13 @@ void sim_ooo::issue(unsigned temp_PC){
 	      strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 	      hold_val2 = atoi(operands_needed+1);
 	      if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Int[current_R_int].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Int[current_R_int].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Int[current_R_int].Qj = 0;
 					}
 					else{
-						RES_Stat_Int[current_R_int].Qj = head_ROB+1;
+						RES_Stat_Int[current_R_int].Qj = h_val+1;
 					}
 	      }
 				else{
@@ -548,13 +575,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].rob_temp_pc = temp_PC;
 				ROB_table[current_B].state = ISSUE;
 				if(int_reg_stat[hold_val2].reg_busy){
-					head_ROB = int_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Int[current_R_int].Vk = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Int[current_R_int].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Int[current_R_int].Qk = 0;
 					}
 					else{
-						RES_Stat_Int[current_R_int].Qk = head_ROB;
+						RES_Stat_Int[current_R_int].Qk = h_val;
 					}
 				}
 				else{
@@ -582,13 +609,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(int_reg_stat[hold_val1].reg_busy){
-					head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qj = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qj = h_val;
 					}
 				}
 				else{
@@ -602,13 +629,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].state = ISSUE;
 
 				if(int_reg_stat[hold_val2].reg_busy){
-					head_ROB = int_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qk = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qk = h_val;
 					}
 				}
 				else{
@@ -636,13 +663,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(int_reg_stat[hold_val1].reg_busy){
-					head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qj = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qj = h_val;
 					}
 				}
 				else{
@@ -656,13 +683,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].state = ISSUE;
 
 				if(int_reg_stat[hold_val2].reg_busy){
-					head_ROB = int_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qk = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qk = h_val;
 					}
 				}
 				else{
@@ -696,13 +723,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 	      hold_val1 = atoi(operands_needed+1);
 	      if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Int[current_R_int].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Int[current_R_int].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Int[current_R_int].Qj = 0;
 					}
 					else{
-						RES_Stat_Int[current_R_int].Qj = head_ROB;
+						RES_Stat_Int[current_R_int].Qj = h_val;
 					}
 	      }
 				else{
@@ -745,13 +772,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 	      hold_val2 = atoi(operands_needed+1);
 	      if(float_reg_stat[hold_val1].reg_busy){
-	        head_ROB = float_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Add[current_R_add].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Add[current_R_add].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Add[current_R_add].Qj = 0;
 					}
 					else{
-						RES_Stat_Add[current_R_add].Qj = head_ROB;
+						RES_Stat_Add[current_R_add].Qj = h_val;
 					}
 	      }
 				else{
@@ -765,13 +792,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].state = ISSUE;
 
 				if(float_reg_stat[hold_val2].reg_busy){
-					head_ROB = float_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Add[current_R_add].Vk = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Add[current_R_add].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Add[current_R_add].Qk = 0;
 					}
 					else{
-						RES_Stat_Add[current_R_add].Qk = head_ROB;
+						RES_Stat_Add[current_R_add].Qk = h_val;
 					}
 				}
 				else{
@@ -801,13 +828,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(float_reg_stat[hold_val1].reg_busy){
-					head_ROB = float_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qj = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qj = h_val;
 					}
 				}
 				else{
@@ -821,13 +848,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].state = ISSUE;
 
 				if(float_reg_stat[hold_val2].reg_busy){
-					head_ROB = float_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qk = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qk = h_val;
 					}
 				}
 				else{
@@ -856,13 +883,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(float_reg_stat[hold_val1].reg_busy){
-					head_ROB = float_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vj = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qj = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qj = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qj = h_val;
 					}
 				}
 				else{
@@ -876,13 +903,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].state = ISSUE;
 
 				if(float_reg_stat[hold_val2].reg_busy){
-					head_ROB = float_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Mul[current_R_mul].Vk = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Mul[current_R_mul].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Mul[current_R_mul].Qk = 0;
 					}
 					else{
-						RES_Stat_Mul[current_R_mul].Qk = head_ROB;
+						RES_Stat_Mul[current_R_mul].Qk = h_val;
 					}
 				}
 				else{
@@ -914,13 +941,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed,instruction_memory[temp_PC].mand_operand.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Int[current_R_int].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Int[current_R_int].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Int[current_R_int].Qj = 0;
 					}
 					else{
-						RES_Stat_Int[current_R_int].Qj = head_ROB;
+						RES_Stat_Int[current_R_int].Qj = h_val;
 					}
 	      }
 				else{
@@ -970,13 +997,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 
 				if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+						RES_Stat_Load[current_R_ld].Qj = h_val;
 					}
 	      }
 				else{
@@ -1021,13 +1048,13 @@ void sim_ooo::issue(unsigned temp_PC){
 					pch1 = strtok(NULL," R,( ");
 				}
 				if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+						RES_Stat_Load[current_R_ld].Qj = h_val;
 					}
 	      }
 
@@ -1074,13 +1101,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 
 				if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+						RES_Stat_Load[current_R_ld].Qj = h_val;
 					}
 	      }
 				else{
@@ -1096,13 +1123,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed, instruction_memory[temp_PC].mand_operand.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(int_reg_stat[hold_val2].reg_busy){
-					head_ROB = int_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vk = ROB_table[head_ROB].rob_val;
+					h_val = int_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qk = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qk = head_ROB;
+						RES_Stat_Load[current_R_ld].Qk = h_val;
 					}
 				}
 				else{
@@ -1136,13 +1163,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 
 				if(int_reg_stat[hold_val1].reg_busy){
-	        head_ROB = int_reg_stat[hold_val1].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[head_ROB].rob_val;
+	        h_val = int_reg_stat[hold_val1].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = head_ROB;
+						RES_Stat_Load[current_R_ld].Qj = h_val;
 					}
 	      }
 				else{
@@ -1158,13 +1185,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed, instruction_memory[temp_PC].mand_operand.c_str());
 				hold_val2 = atoi(operands_needed+1);
 				if(float_reg_stat[hold_val2].reg_busy){
-					head_ROB = float_reg_stat[hold_val2].ROB_num;
-					if(ROB_table[head_ROB].ready){
-						RES_Stat_Load[current_R_ld].Vk = ROB_table[head_ROB].rob_val;
+					h_val = float_reg_stat[hold_val2].ROB_num;
+					if(ROB_table[h_val].ready){
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Load[current_R_ld].Qk = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qk = head_ROB;
+						RES_Stat_Load[current_R_ld].Qk = h_val;
 					}
 				}
 				else{
@@ -1560,7 +1587,6 @@ void sim_ooo::execute_ins(){
 
 void sim_ooo::write_res(){
 	unsigned b_rob;
-
 	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
 		ROB_table[RES_Stat_Int[i].res_dest].rob_val = int_result[i];
 		ROB_table[RES_Stat_Int[i].res_dest].if_branch_rob = RES_Stat_Int[i].if_branch;
@@ -1579,48 +1605,87 @@ void sim_ooo::write_res(){
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
-			b_rob = RES_Stat_Int[i].res_dest;
-			RES_Stat_Int[i].res_busy = 0;
+			b_rob = RES_Stat_Int[i].res_dest + 1;
+
 			if(RES_Stat_Int[i].Qj == b_rob){
-				RES_Stat_Int[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Int[i].Vj = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Int[i].Qj = 0;
 			}
-			if(RES_Stat_Int[i].Qk == b_rob){
-				RES_Stat_Int[i].Vk = ROB_table[b_rob].rob_val;
+			else if(RES_Stat_Int[i].Qk == b_rob){
+				RES_Stat_Int[i].Vk = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Int[i].Qk = 0;
 			}
-			ROB_table[b_rob].ready = 1;
-			ROB_table[b_rob].state = WRITE_RESULT;
+			else{
+				ROB_table[b_rob - 1].ready = 1;
+				ROB_table[b_rob - 1].state = WRITE_RESULT;
+				RES_Stat_Int[i].res_busy = 0;
+				RES_Stat_Int[i].res_pc = UNDEFINED;
+				RES_Stat_Int[i].Vj = UNDEFINED;
+				RES_Stat_Int[i].Vk = UNDEFINED;
+				RES_Stat_Int[i].Qj = UNDEFINED;
+				RES_Stat_Int[i].res_dest = UNDEFINED;
+				RES_Stat_Int[i].res_A = UNDEFINED;
+				RES_Stat_Int[i].op_num = UNDEFINED;
+				RES_Stat_Int[i].if_branch = UNDEFINED;
+				RES_Stat_Int[i].use_ex = 0;
+				RES_Stat_Int[i].op = NOTVALID;
+			}
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
-			b_rob = RES_Stat_Add[i].res_dest;
+			b_rob = RES_Stat_Add[i].res_dest + 1;
 			RES_Stat_Add[i].res_busy = 0;
 			if(RES_Stat_Add[i].Qj == b_rob){
-				RES_Stat_Add[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Add[i].Vj = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Add[i].Qj = 0;
 			}
-			if(RES_Stat_Add[i].Qk == b_rob){
-				RES_Stat_Add[i].Vk = ROB_table[b_rob].rob_val;
+			else if(RES_Stat_Add[i].Qk == b_rob){
+				RES_Stat_Add[i].Vk = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Add[i].Qk = 0;
 			}
-			ROB_table[b_rob].ready = 1;
-			ROB_table[b_rob].state = WRITE_RESULT;
+			else{
+				ROB_table[b_rob - 1].ready = 1;
+				ROB_table[b_rob - 1].state = WRITE_RESULT;
+				RES_Stat_Add[i].res_busy = 0;
+				RES_Stat_Add[i].res_pc = UNDEFINED;
+				RES_Stat_Add[i].Vj = UNDEFINED;
+				RES_Stat_Add[i].Vk = UNDEFINED;
+				RES_Stat_Add[i].Qj = UNDEFINED;
+				RES_Stat_Add[i].res_dest = UNDEFINED;
+				RES_Stat_Add[i].res_A = UNDEFINED;
+				RES_Stat_Add[i].op_num = UNDEFINED;
+				RES_Stat_Add[i].if_branch = UNDEFINED;
+				RES_Stat_Add[i].use_ex = 0;
+				RES_Stat_Add[i].op = NOTVALID;
+			}
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
-			b_rob = RES_Stat_Mul[i].res_dest;
+			b_rob = RES_Stat_Mul[i].res_dest + 1;
 			RES_Stat_Mul[i].res_busy = 0;
 			if(RES_Stat_Mul[i].Qj == b_rob){
-				RES_Stat_Mul[i].Vj = ROB_table[b_rob].rob_val;
+				RES_Stat_Mul[i].Vj = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Mul[i].Qj = 0;
 			}
-			if(RES_Stat_Mul[i].Qk == b_rob){
-				RES_Stat_Mul[i].Vk = ROB_table[b_rob].rob_val;
+			else if(RES_Stat_Mul[i].Qk == b_rob){
+				RES_Stat_Mul[i].Vk = ROB_table[b_rob - 1].rob_val;
 				RES_Stat_Mul[i].Qk = 0;
 			}
-			ROB_table[b_rob].ready = 1;
-			ROB_table[b_rob].state = WRITE_RESULT;
+			else{
+				ROB_table[b_rob - 1].ready = 1;
+				ROB_table[b_rob - 1].state = WRITE_RESULT;
+				RES_Stat_Mul[i].res_busy = 0;
+				RES_Stat_Mul[i].res_pc = UNDEFINED;
+				RES_Stat_Mul[i].Vj = UNDEFINED;
+				RES_Stat_Mul[i].Vk = UNDEFINED;
+				RES_Stat_Mul[i].Qj = UNDEFINED;
+				RES_Stat_Mul[i].res_dest = UNDEFINED;
+				RES_Stat_Mul[i].res_A = UNDEFINED;
+				RES_Stat_Mul[i].op_num = UNDEFINED;
+				RES_Stat_Mul[i].if_branch = UNDEFINED;
+				RES_Stat_Mul[i].use_ex = 0;
+				RES_Stat_Mul[i].op = NOTVALID;
+			}
 	}
 
 	unsigned if_addr_same;
@@ -1639,6 +1704,18 @@ void sim_ooo::write_res(){
 				}
 				if((load_done == 1) && (if_addr_same!=1)){
 					ROB_table[RES_Stat_Load[i].res_dest].rob_val = char2unsigned(data_memory + RES_Stat_Load[i].res_A);
+					ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
+					RES_Stat_Load[i].res_busy = 0;
+					RES_Stat_Load[i].res_pc = UNDEFINED;
+					RES_Stat_Load[i].Vj = UNDEFINED;
+					RES_Stat_Load[i].Vk = UNDEFINED;
+					RES_Stat_Load[i].Qj = UNDEFINED;
+					RES_Stat_Load[i].res_dest = UNDEFINED;
+					RES_Stat_Load[i].res_A = UNDEFINED;
+					RES_Stat_Load[i].op_num = UNDEFINED;
+					RES_Stat_Load[i].if_branch = UNDEFINED;
+					RES_Stat_Load[i].use_ex = 0;
+					RES_Stat_Load[i].op = NOTVALID;
 				}
 				break;
 
@@ -1646,6 +1723,18 @@ void sim_ooo::write_res(){
 			case SWS:
 				if(RES_Stat_Load[i].Qk == 0){
 					ROB_table[head_ROB].rob_val = RES_Stat_Load[i].Vk;
+					ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
+					RES_Stat_Load[i].res_busy = 0;
+					RES_Stat_Load[i].res_pc = UNDEFINED;
+					RES_Stat_Load[i].Vj = UNDEFINED;
+					RES_Stat_Load[i].Vk = UNDEFINED;
+					RES_Stat_Load[i].Qj = UNDEFINED;
+					RES_Stat_Load[i].res_dest = UNDEFINED;
+					RES_Stat_Load[i].res_A = UNDEFINED;
+					RES_Stat_Load[i].op_num = UNDEFINED;
+					RES_Stat_Load[i].if_branch = UNDEFINED;
+					RES_Stat_Load[i].use_ex = 0;
+					RES_Stat_Load[i].op = NOTVALID;
 				}
 				break;
 		}
@@ -1653,6 +1742,7 @@ void sim_ooo::write_res(){
 }
 
 void sim_ooo::commit_stage(){
+	std::cout << "**********Commit Stage************" << '\n';
 	unsigned d;
 	if(ROB_table[head_ROB].ready == 1){
 		d = ROB_table[head_ROB].rob_dest;
@@ -1711,6 +1801,12 @@ void sim_ooo::commit_stage(){
 		if(float_reg_stat[d].ROB_num == head_ROB){
 
 			float_reg_stat[d].reg_busy = 0;
+		}
+		if(head_ROB < ROB_table.size()){
+			head_ROB++;
+		}
+		else{
+			head_ROB = 0;
 		}
 	}
 }

@@ -54,6 +54,7 @@ class sim_ooo{
 	unsigned div_struc_hazard;
 	unsigned issue_size;
 	unsigned issue_success;
+	unsigned num_cycles;
 
 public:
 
