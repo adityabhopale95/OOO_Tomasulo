@@ -23,6 +23,7 @@ typedef enum {INTEGER, ADDER, MULTIPLIER, DIVIDER, MEMORY, NOTVALID} exe_unit_t;
 
 typedef enum{ISSUE, EXECUTE, WRITE_RESULT, COMMIT, INVALID} stage_t;
 
+typedef enum{INTEGER_RES,FLOAT_RES,NOTASSIGNED} res_type_t;
 
 
 class sim_ooo{
@@ -37,7 +38,6 @@ class sim_ooo{
 	unsigned data_memory_size;
 	unsigned register_file[NUM_GP_REGISTERS];
 	float float_reg_file[NUM_FP_REGISTERS];
-	unsigned base_add;
 	unsigned current_PC;
 	unsigned head_ROB;
 	unsigned current_R_int;
@@ -52,6 +52,8 @@ class sim_ooo{
 	unsigned add_struc_hazard;
 	unsigned mul_struc_hazard;
 	unsigned div_struc_hazard;
+	unsigned issue_size;
+	unsigned issue_success;
 
 public:
 
@@ -91,7 +93,7 @@ public:
 
 	void clear_reg();
 
-	void issue();
+	void issue(unsigned temp_PC);
 
 	//Execute stage of the Tomasulo's algorithm
 	void execute_ins();
