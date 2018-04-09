@@ -55,6 +55,7 @@ class sim_ooo{
 	unsigned issue_size;
 	unsigned issue_success;
 	unsigned num_cycles;
+	unsigned load_complete;
 
 public:
 
