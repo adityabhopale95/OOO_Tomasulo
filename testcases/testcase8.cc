@@ -5,7 +5,7 @@
 
 using namespace std;
 
-/* Test case for pipelined simuator */
+/* Test case for pipelined simuator */ 
 /* DO NOT MODIFY */
 
 /* convert a float into an unsigned */
@@ -27,35 +27,36 @@ int main(int argc, char **argv){
 	unsigned i, j;
 
 	// instantiates sim_ooo with a 1MB data memory
-	sim_ooo *ooo = new sim_ooo(1024*1024,
-				   6,
-				   3, 2, 2, 2,
-				   4);
+	sim_ooo *ooo = new sim_ooo(1024*1024,	//memory size 
+				   6,           //rob size
+				   1, 2, 2, 3); //int, add, mult, load reservation stations
 
 	//initialize execution units
-        ooo->init_exec_unit(INTEGER, 2, 2);
-        ooo->init_exec_unit(ADDER, 2, 2);
+        ooo->init_exec_unit(INTEGER, 2, 1);
+        ooo->init_exec_unit(ADDER, 3, 1);
         ooo->init_exec_unit(MULTIPLIER, 10, 1);
         ooo->init_exec_unit(DIVIDER, 40, 1);
-        ooo->init_exec_unit(MEMORY, 1, 1);
+        ooo->init_exec_unit(MEMORY, 5, 1);
 
 	//loads program in instruction memory at address 0x00000000
-	ooo->load_program("asm/code_ooo2.asm", 0x00000000);
+	ooo->load_program("asm/code_ooo5.asm", 0x00000000);
 
 	//initialize general purpose registers
-	for (i=0; i<5; i++) ooo->set_fp_register(i, (float)i);
+	ooo->set_int_register(1, 0xA000);
+	ooo->set_int_register(2, 0xA004);
+	ooo->set_fp_register(1, 100.0);
 
-	//initialize data mem ry and prints its content (for the specified address ranges)
-	for (i = 0xA000, j=0; i<0xA020; i+=4, j+=1) ooo->write_memory(i,float2unsigned((float)(j+1)));
-
+	//initialize data memory and prints its content (for the specified address ranges)
+        for (i = 0xA000, j=1; i<0xA020; i+=4, j+=1) ooo->write_memory(i,float2unsigned((float)(j)));
+	
 	cout << "\nBEFORE PROGRAM EXECUTION..." << endl;
 	cout << "======================================================================" << endl << endl;
-
+	
 	//prints the value of the memory and registers
 	ooo->print_registers();
 	ooo->print_memory(0xA000, 0xA020);
 
-	// executes the program
+	// executes the program	
 	cout << "\n*****************************" << endl;
 	cout << "STARTING THE PROGRAM..." << endl;
 	cout << "*****************************" << endl << endl;
@@ -85,7 +86,7 @@ int main(int argc, char **argv){
 
 	//print the execution log
 	ooo->print_log();
-
+	
 	cout << endl;
 
 	// prints the number of instructions executed and IPC
