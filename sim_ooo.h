@@ -39,7 +39,7 @@ class sim_ooo{
 	unsigned register_file[NUM_GP_REGISTERS];
 	float float_reg_file[NUM_FP_REGISTERS];
 	unsigned current_PC;
-	unsigned head_ROB;
+	int head_ROB;
 	unsigned current_R_int;
 	unsigned current_R_mul;
 	unsigned current_R_add;
@@ -56,7 +56,10 @@ class sim_ooo{
 	unsigned issue_success;
 	unsigned num_cycles;
 	unsigned load_complete;
-
+	unsigned check_end;
+	unsigned eop_end;
+	unsigned num_instructions;
+	unsigned is_cleared;
 public:
 
 	/* Instantiates the simulator
@@ -94,6 +97,8 @@ public:
 	void clear_res();
 
 	void clear_reg();
+
+	void clear_exe();
 
 	void issue(unsigned temp_PC);
 

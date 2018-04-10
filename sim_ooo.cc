@@ -33,6 +33,7 @@ struct ROB_struc{
   unsigned rob_dest;
   unsigned rob_val;
 	res_type_t dest_type;
+	unsigned if_commit;
 };
 
 struct RES_Stat_struc{
@@ -52,6 +53,8 @@ struct RES_Stat_struc{
 	unsigned if_depend_Vj;
 	unsigned if_depend_Vk;
 	unsigned wr_done;
+	unsigned imm_val;
+	res_type_t res_dest_type;
 	exe_unit_t op;
 };
 
@@ -79,8 +82,8 @@ std::map<string, int> opcode_map;
 
 every_line every_instruct;
 
-ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEFINED,NOTASSIGNED};
-RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,NOTVALID};
+ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEFINED,NOTASSIGNED,0};
+RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,UNDEFINED,NOTASSIGNED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,1};
 pack_of_exec execution_structure;
 std::vector<REGISTER_Stat> int_reg_stat;
@@ -234,7 +237,9 @@ sim_ooo::sim_ooo(unsigned mem_size,
 	head_ROB = 0;
 	issue_success = 1;
 	num_cycles = 0;
-	load_complete = 0;
+	check_end = 0;
+	num_instructions = 0;
+	is_cleared = 0;
 }
 
 sim_ooo::~sim_ooo(){
@@ -472,17 +477,48 @@ void sim_ooo::run(unsigned cycles){
 
 			execute_ins();
 
-			for(int i = 0; i < issue_size; i++){
-				PC_index = (current_PC - base_add)/4;
-				issue(PC_index);
-				if(issue_success == 1){
-					current_PC = current_PC + 4;
-				}
-				else{
-					break;
+			if(is_cleared != 1 ){
+				for(int i = 0; i < issue_size; i++){
+					PC_index = (current_PC - base_add)/4;
+					issue(PC_index);
+					std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
+					if(issue_success == 1){
+						current_PC = current_PC + 4;
+					}
+					else{
+						break;
+					}
 				}
 			}
 			cycles--;
+		}
+	}
+	else{
+		while(cycles==0){
+			if(eop_end){
+				break;
+			}
+			else{
+				num_cycles++;
+				commit_stage();
+
+				write_res();
+
+				execute_ins();
+
+				if(is_cleared != 1){
+					for(int i = 0; i < issue_size; i++){
+						PC_index = (current_PC - base_add)/4;
+						issue(PC_index);
+						if(issue_success == 1){
+							current_PC = current_PC + 4;
+						}
+						else{
+							break;
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -503,11 +539,20 @@ void sim_ooo::issue(unsigned temp_PC){
 	unsigned res_yes_add;
 	unsigned imm;
 	unsigned h_val;
+	int fake_head;
+
+
+
 	std::cout << "Value of HEAD: " << head_ROB << '\n';
 	for(unsigned i = head_ROB; i < ROB_table.size(); i++){
 		std::cout << "ROB_BUSY: " << ROB_table[i].rob_busy << '\n';
 		if(ROB_table[i].rob_busy != 1){
 			std::cout << "Assigning ROB: " << i << '\n';
+			/*if(ROB_table[i].if_commit == 1){
+				ROB_table[i].if_commit = 0;
+				rob_yes = 0;
+				break;
+			}*/
 			current_B = i;
 			rob_yes = 1;
 			break;
@@ -520,6 +565,18 @@ void sim_ooo::issue(unsigned temp_PC){
 	if(rob_yes == 0){
 		for(unsigned j = 0; j < head_ROB; j++){
 			if(ROB_table[j].rob_busy != 1){
+				/*if(ROB_table[j].if_commit == 1){
+					ROB_table[j].if_commit = 0;
+					rob_yes = 0;
+					break;
+				}*/
+				/*if(j == (head_ROB-1)){
+					if(ROB_table[(head_ROB-1)].if_commit == 1){
+						ROB_table[(head_ROB-1)].if_commit = 0;
+						rob_yes = 0;
+						break;
+					}
+				}*/
 				current_B = j;
 				rob_yes = 1;
 				break;
@@ -599,6 +656,8 @@ void sim_ooo::issue(unsigned temp_PC){
 	std::cout << "RESERVATION STATION Available for ADD: " << res_yes_add << '\n';
 	std::cout << "RESERVATION STATION Available for MEM: " << res_yes_load << '\n';
 
+	std::cout << "OPCODE in ISSUE:" << instruction_memory[temp_PC].op_code << '\n';
+	std::cout << "TEMP_PC: " << temp_PC << '\n';
   switch (opcode_map[instruction_memory[temp_PC].op_code]) {
     case XOR:
   	case ADD:
@@ -607,6 +666,11 @@ void sim_ooo::issue(unsigned temp_PC){
   	case AND:
 			if(res_yes_int == 1 && rob_yes == 1){
 				issue_success = 1;
+				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
+					if(int_ex_done[iter] == 1){
+						int_ex_done[iter] = 0;
+					}
+				}
       	strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 	      hold_val1 = atoi(operands_needed+1);
 	      strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -624,8 +688,11 @@ void sim_ooo::issue(unsigned temp_PC){
 					}
 	      }
 				else{
+					std::cout << "Value loaded: " << register_file[hold_val1] << '\n';
 					RES_Stat_Int[current_R_int].Vj = register_file[hold_val1];
+					std::cout << "Vj: " << RES_Stat_Int[current_R_int].Vj << '\n';
 					RES_Stat_Int[current_R_int].Qj = 0;
+					RES_Stat_Int[current_R_int].if_depend_Vj = 0;
 				}
 				RES_Stat_Int[current_R_int].res_busy = 1;
 				RES_Stat_Int[current_R_int].res_dest = current_B;
@@ -647,6 +714,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 				else{
 					RES_Stat_Int[current_R_int].Vk = register_file[hold_val2];
+					std::cout << "Vk: " << RES_Stat_Int[current_R_int].Vk << '\n';
 					RES_Stat_Int[current_R_int].Qk = 0;
 					RES_Stat_Int[current_R_int].if_depend_Vk = 0;
 				}
@@ -656,9 +724,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				int_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = INTEGER_RES;
+				RES_Stat_Int[current_R_int].res_dest_type = INTEGER_RES;
 				RES_Stat_Int[current_R_int].op = INTEGER;
 				RES_Stat_Int[current_R_int].op_num = temp_PC;
 				RES_Stat_Int[current_R_int].res_pc = temp_PC*4 + base_add;
+			}
+			else{
+				issue_success = 0;
 			}
 
 			break;
@@ -666,6 +738,11 @@ void sim_ooo::issue(unsigned temp_PC){
 		case MULT:
 			if(res_yes_mul == 1 && rob_yes == 1){
 				issue_success = 1;
+				for(unsigned iter = 0; iter < mul_ex_done.size(); iter++){
+					if(mul_ex_done[iter] == 1){
+						mul_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 				hold_val1 = atoi(operands_needed+1);ROB_table[current_B].rob_busy = 1;
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -717,9 +794,13 @@ void sim_ooo::issue(unsigned temp_PC){
 				int_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = INTEGER_RES;
+				RES_Stat_Mul[current_R_mul].res_dest_type = INTEGER_RES;
 				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
 				RES_Stat_Mul[current_R_mul].op_num = temp_PC;
 				RES_Stat_Mul[current_R_mul].res_pc = temp_PC*4 + base_add;
+			}
+			else{
+				issue_success = 0;
 			}
 
 			break;
@@ -727,6 +808,11 @@ void sim_ooo::issue(unsigned temp_PC){
 		case DIV:
 			if(res_yes_mul == 1 && rob_yes == 1){
 				issue_success = 1;
+				for(unsigned iter = 0; iter < div_ex_done.size(); iter++){
+					if(div_ex_done[iter] == 1){
+						div_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -778,6 +864,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				int_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = INTEGER_RES;
+				RES_Stat_Mul[current_R_mul].res_dest_type = INTEGER_RES;
 				RES_Stat_Mul[current_R_mul].op = DIVIDER;
 				RES_Stat_Mul[current_R_mul].op_num = temp_PC;
 				RES_Stat_Mul[current_R_mul].res_pc = temp_PC*4 + base_add;
@@ -795,6 +882,11 @@ void sim_ooo::issue(unsigned temp_PC){
 		case ANDI:
 			char *endptr;
 			if(res_yes_int == 1 && rob_yes == 1){
+				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
+					if(int_ex_done[iter] == 1){
+						int_ex_done[iter] = 0;
+					}
+				}
 				issue_success = 1;
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 	      hold_val1 = atoi(operands_needed+1);
@@ -824,7 +916,7 @@ void sim_ooo::issue(unsigned temp_PC){
 
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
 				imm = strtoul(operands_needed, &endptr, 0);
-				RES_Stat_Int[current_R_int].res_A = imm;
+				RES_Stat_Int[current_R_int].imm_val = imm;
 				RES_Stat_Int[current_R_int].Qk = 0;
 				RES_Stat_Int[current_R_int].if_depend_Vk = 0;
 
@@ -835,6 +927,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = INTEGER_RES;
 				RES_Stat_Int[current_R_int].op = INTEGER;
+				RES_Stat_Int[current_R_int].res_dest_type = INTEGER_RES;
 				RES_Stat_Int[current_R_int].op_num = temp_PC;
 				RES_Stat_Int[current_R_int].res_pc = temp_PC*4 + base_add;
 			}
@@ -848,6 +941,11 @@ void sim_ooo::issue(unsigned temp_PC){
 		case SUBS:
 			if(res_yes_add == 1 && rob_yes == 1){
 				issue_success = 1;
+				for(unsigned iter = 0; iter < add_ex_done.size(); iter++){
+					if(add_ex_done[iter] == 1){
+						add_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -902,6 +1000,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				float_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = FLOAT_RES;
+				RES_Stat_Add[current_R_add].res_dest_type = FLOAT_RES;
 				RES_Stat_Add[current_R_add].op = ADDER;
 				RES_Stat_Add[current_R_add].op_num = temp_PC;
 				RES_Stat_Add[current_R_add].res_pc = temp_PC*4 + base_add;
@@ -912,7 +1011,14 @@ void sim_ooo::issue(unsigned temp_PC){
 			break;
 
 		case MULTS:
+			std::cout << "Came here in MULTS" << '\n';
 			if(res_yes_mul == 1 && rob_yes == 1){
+				issue_success = 1;
+				for(unsigned iter = 0; iter < mul_ex_done.size(); iter++){
+					if(mul_ex_done[iter] == 1){
+						mul_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -927,7 +1033,7 @@ void sim_ooo::issue(unsigned temp_PC){
 					else{
 						RES_Stat_Mul[current_R_mul].Qj = h_val+1;
 						RES_Stat_Mul[current_R_mul].if_depend_Vj = 1;
-					}ROB_table[current_B].rob_busy = 1;
+					}
 				}
 				else{
 					RES_Stat_Mul[current_R_mul].Vj = float2unsigned(float(float_reg_file[hold_val1]));
@@ -965,6 +1071,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].rob_dest = hold_val;
 				ROB_table[current_B].dest_type = FLOAT_RES;
 				RES_Stat_Mul[current_R_mul].op = MULTIPLIER;
+				RES_Stat_Mul[current_R_mul].res_dest_type = FLOAT_RES;
 				RES_Stat_Mul[current_R_mul].op_num = temp_PC;
 				RES_Stat_Mul[current_R_mul].res_pc = temp_PC*4 + base_add;
 			}
@@ -975,6 +1082,12 @@ void sim_ooo::issue(unsigned temp_PC){
 
 		case DIVS:
 			if(res_yes_mul == 1 && rob_yes == 1){
+				issue_success = 1;
+				for(unsigned iter = 0; iter < div_ex_done.size(); iter++){
+					if(div_ex_done[iter] == 1){
+						div_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand1.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				strcpy(operands_needed,instruction_memory[temp_PC].remainder_operand2.c_str());
@@ -998,6 +1111,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 				RES_Stat_Mul[current_R_mul].res_busy = 1;
 				RES_Stat_Mul[current_R_mul].res_dest = current_B;
+				RES_Stat_Mul[current_R_mul].res_dest_type = FLOAT_RES;
 				ROB_table[current_B].rob_pc = temp_PC*4 + base_add;
 				ROB_table[current_B].rob_temp_pc = temp_PC;
 				ROB_table[current_B].state = ISSUE;
@@ -1042,6 +1156,12 @@ void sim_ooo::issue(unsigned temp_PC){
 		case BLEZ:
 		case BGEZ:
 			if(res_yes_int == 1 && rob_yes == 1){
+				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
+					if(int_ex_done[iter] == 1){
+						int_ex_done[iter] = 0;
+					}
+				}
+				issue_success = 1;
 				strcpy(operands_needed,instruction_memory[temp_PC].mand_operand.c_str());
 				hold_val1 = atoi(operands_needed+1);
 				if(int_reg_stat[hold_val1].reg_busy){
@@ -1067,6 +1187,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				RES_Stat_Int[current_R_int].if_depend_Vk = 0;
 				ROB_table[current_B].rob_pc = temp_PC*4 + base_add;
 				ROB_table[current_B].rob_temp_pc = temp_PC;
+				RES_Stat_Int[current_R_int].res_dest_type = FLOAT_RES;
 				ROB_table[current_B].state = ISSUE;
 				ROB_table[current_B].rob_busy = 1;
 
@@ -1094,6 +1215,12 @@ void sim_ooo::issue(unsigned temp_PC){
 			unsigned hold_val_imm;
 			char *pch;
 			if(res_yes_load == 1 && rob_yes == 1){
+				for(unsigned iter = 0; iter < ld_ex_done.size(); iter++){
+					if(ld_ex_done[iter] == 1){
+						ld_ex_done[iter] = 0;
+					}
+				}
+				issue_success = 1;
 				strcpy(operands_needed, instruction_memory[temp_PC].remainder_operand1.c_str());
 				pch = strtok(operands_needed, " ( ");
 				hold_val_imm = atoi(pch);
@@ -1138,6 +1265,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				int_reg_stat[hold_val].ROB_num = current_B;
 				int_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
+				RES_Stat_Load[current_R_ld].res_dest_type = INTEGER_RES;
 				ROB_table[current_B].dest_type = INTEGER_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
 				RES_Stat_Load[current_R_ld].op_num = temp_PC;
@@ -1152,6 +1280,12 @@ void sim_ooo::issue(unsigned temp_PC){
 			unsigned hold_val_imm1;
 			char *pch1;
 			if(res_yes_load == 1 && rob_yes == 1){
+				issue_success = 1;
+				for(unsigned iter = 0; iter < ld_ex_done.size(); iter++){
+					if(ld_ex_done[iter] == 1){
+						ld_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed, instruction_memory[temp_PC].remainder_operand1.c_str());
 				pch1 = strtok(operands_needed, " ( ");
 				hold_val_imm1 = atoi(pch1);
@@ -1196,6 +1330,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				float_reg_stat[hold_val].ROB_num = current_B;
 				float_reg_stat[hold_val].reg_busy = 1;
 				ROB_table[current_B].rob_dest = hold_val;
+				RES_Stat_Load[current_R_ld].res_dest_type = FLOAT_RES;
 				ROB_table[current_B].dest_type = FLOAT_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
 				RES_Stat_Load[current_R_ld].op_num = temp_PC;
@@ -1211,6 +1346,12 @@ void sim_ooo::issue(unsigned temp_PC){
 			unsigned hold_val_imm2;
 			char *pch2;
 			if(res_yes_load == 1 && rob_yes == 1){
+				for(unsigned iter = 0; iter < ld_ex_done.size(); iter++){
+					if(ld_ex_done[iter] == 1){
+						ld_ex_done[iter] = 0;
+					}
+				}
+				issue_success = 1;
 				strcpy(operands_needed, instruction_memory[temp_PC].remainder_operand1.c_str());
 				pch2 = strtok(operands_needed, " ( ");
 				hold_val_imm2 = atoi(pch2);
@@ -1266,6 +1407,7 @@ void sim_ooo::issue(unsigned temp_PC){
 					RES_Stat_Load[current_R_ld].Qk = 0;
 					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 				}
+				RES_Stat_Load[current_R_ld].res_dest_type = INTEGER_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
 				RES_Stat_Load[current_R_ld].op_num = temp_PC;
 				RES_Stat_Load[current_R_ld].res_pc = temp_PC*4 + base_add;
@@ -1280,6 +1422,12 @@ void sim_ooo::issue(unsigned temp_PC){
 			char *pch3;
 
 			if(res_yes_load == 1 && rob_yes == 1){
+				issue_success = 1;
+				for(unsigned iter = 0; iter < ld_ex_done.size(); iter++){
+					if(ld_ex_done[iter] == 1){
+						ld_ex_done[iter] = 0;
+					}
+				}
 				strcpy(operands_needed, instruction_memory[temp_PC].remainder_operand1.c_str());
 				pch3 = strtok(operands_needed, " ( ");
 				hold_val_imm3 = atoi(pch3);
@@ -1335,13 +1483,24 @@ void sim_ooo::issue(unsigned temp_PC){
 					RES_Stat_Load[current_R_ld].Qk = 0;
 					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 				}
+				RES_Stat_Load[current_R_ld].res_dest_type = FLOAT_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
 				RES_Stat_Load[current_R_ld].op_num = temp_PC*4 + base_add;
 				RES_Stat_Load[current_R_ld].res_pc = temp_PC;
 			}
+
 			else{
 				issue_success = 0;
 			}
+			break;
+
+		case EOP:
+			check_end = 1;
+			issue_success = 0;
+			break;
+
+		default:
+			break;
   }
 }
 
@@ -1362,6 +1521,11 @@ void sim_ooo::execute_ins(){
 				if(RES_Stat_Int[i].if_depend_Vj == 1 || RES_Stat_Int[i].if_depend_Vk == 1){
 					RES_Stat_Int[i].if_depend_Vj = 0;
 					RES_Stat_Int[i].if_depend_Vk = 0;
+					for(unsigned it = 0; it < int_ex_done.size(); it++){
+						if(int_ex_done[it] == 1){
+							int_ex_done[it] = 0;
+						}
+					}
 					continue;
 				}
 				switch (RES_Stat_Int[i].op) {
@@ -1419,23 +1583,23 @@ void sim_ooo::execute_ins(){
 					break;
 
 				case ADDI:
-					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj + RES_Stat_Int[big_int[sel_int_unit].res_stat_num].res_A;
+					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj + RES_Stat_Int[big_int[sel_int_unit].res_stat_num].imm_val;
 					break;
 
 				case SUBI:
-					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj - RES_Stat_Int[big_int[sel_int_unit].res_stat_num].res_A;
+					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj - RES_Stat_Int[big_int[sel_int_unit].res_stat_num].imm_val;
 					break;
 
 				case XORI:
-					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj ^ RES_Stat_Int[big_int[sel_int_unit].res_stat_num].res_A;
+					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj ^ RES_Stat_Int[big_int[sel_int_unit].res_stat_num].imm_val;
 					break;
 
 				case ORI:
-					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj | RES_Stat_Int[big_int[sel_int_unit].res_stat_num].res_A;
+					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj | RES_Stat_Int[big_int[sel_int_unit].res_stat_num].imm_val;
 					break;
 
 				case ANDI:
-					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj & RES_Stat_Int[big_int[sel_int_unit].res_stat_num].res_A;
+					int_result[big_int[sel_int_unit].res_stat_num] = RES_Stat_Int[big_int[sel_int_unit].res_stat_num].Vj & RES_Stat_Int[big_int[sel_int_unit].res_stat_num].imm_val;
 					break;
 
 				case BEQZ:
@@ -1615,6 +1779,11 @@ void sim_ooo::execute_ins(){
 				if(RES_Stat_Mul[i].if_depend_Vj == 1 || RES_Stat_Mul[i].if_depend_Vk == 1){
 					RES_Stat_Mul[i].if_depend_Vj = 0;
 					RES_Stat_Mul[i].if_depend_Vk = 0;
+					for(unsigned it = 0; it < mul_ex_done.size(); it++){
+						if(mul_ex_done[it] == 1){
+							mul_ex_done[it] = 0;
+						}
+					}
 					continue;
 				}
 				std::cout << "No dependencies whatsoever" << '\n';
@@ -1735,6 +1904,11 @@ void sim_ooo::execute_ins(){
 				if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
 					RES_Stat_Load[i].if_depend_Vj = 0;
 					RES_Stat_Load[i].if_depend_Vk = 0;
+					for(unsigned it = 0; it < ld_ex_done.size(); it++){
+						if(ld_ex_done[it] == 1){
+							ld_ex_done[it] = 0;
+						}
+					}
 					continue;
 				}
 				switch(RES_Stat_Load[i].op){
@@ -1742,10 +1916,12 @@ void sim_ooo::execute_ins(){
 						std::cout << "Loading the functional unit in execution stage" << '\n';
 						std::cout << "BIG MEM SIZE: " << big_mem.size() << '\n';
 						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-							//std::cout << "Status of Mem execution unit: " << big_mem[sel_ld_unit].status << '\n';
-							//std::cout << "State of Load: " << ROB_table[RES_Stat_Load[i].res_dest].state << '\n';
+							std::cout << "Status of Mem execution unit: " << big_mem[sel_ld_unit].status << '\n';
+							std::cout << "State of Load: " << ROB_table[RES_Stat_Load[i].res_dest].state << '\n';
+							std::cout << "Size of LOAD EX: " << ld_ex_done.size() << '\n';
 							if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE ){
 								if(ld_ex_done[sel_ld_unit] == 1){
+									std::cout << "Came here" << '\n';
 									ld_ex_done[sel_ld_unit] = 0;
 									continue;
 								}
@@ -1955,7 +2131,7 @@ void sim_ooo::write_res(){
 					RES_Stat_Load[j].Qj = 0;
 				}
 			}
-
+			  std::cout << "Value of ROB:" << RES_Stat_Add[i].res_dest << '\n';
 				ROB_table[RES_Stat_Add[i].res_dest].rob_val = add_result[i];
 				add_result[i] = UNDEFINED;
 				ROB_table[b_rob-1].ready = 1;
@@ -2161,7 +2337,9 @@ void sim_ooo::write_res(){
 void sim_ooo::commit_stage(){
 	std::cout << "**********COMMIT************" << '\n';
 	unsigned d;
-	unsigned if_branch;
+	unsigned if_branch = 0;
+	unsigned flag_end = 0;
+	is_cleared = 0;
 	if(ROB_table[head_ROB].ready == 1){
 		std::cout << "PC of head: " << hex << ROB_table[head_ROB].rob_pc << '\n';
 		d = ROB_table[head_ROB].rob_dest;
@@ -2172,11 +2350,14 @@ void sim_ooo::commit_stage(){
 			case BGTZ:
 			case BLEZ:
 			case BGEZ:
+				num_instructions++;
 				if(ROB_table[head_ROB].if_branch_rob == 1){
 					current_PC = ROB_table[head_ROB].rob_val;
 					clear_rob();
 					clear_res();
 					clear_reg();
+					clear_exe();
+
 					head_ROB = 0;
 					if_branch = 1;
 				}
@@ -2184,6 +2365,7 @@ void sim_ooo::commit_stage(){
 
 			case SW:
 			case SWS:
+				num_instructions++;
 				unsigned2char(ROB_table[head_ROB].rob_val,data_memory+ROB_table[head_ROB].rob_dest);
 				break;
 
@@ -2201,6 +2383,7 @@ void sim_ooo::commit_stage(){
 			case ORI:
 			case ANDI:
 			case LW:
+				num_instructions++;
 				std::cout << "The destination register: " << d << '\n';
 				std::cout << "The headROB: " << head_ROB << '\n';
 				register_file[d] = ROB_table[head_ROB].rob_val;
@@ -2211,7 +2394,10 @@ void sim_ooo::commit_stage(){
 			case MULTS:
 			case DIVS:
 			case LWS:
+				num_instructions++;
 				float_reg_file[d] = unsigned2float(ROB_table[head_ROB].rob_val);
+				break;
+			default:
 				break;
 		}
 		ROB_table[head_ROB].rob_busy = false;
@@ -2220,7 +2406,7 @@ void sim_ooo::commit_stage(){
 		ROB_table[head_ROB].state = INVALID;
 		ROB_table[head_ROB].rob_dest = UNDEFINED;
 		ROB_table[head_ROB].dest_type = NOTASSIGNED;
-
+		ROB_table[head_ROB].if_commit = 1;
 		if(d!=UNDEFINED){
 			if(int_reg_stat[d].ROB_num == head_ROB){
 				int_reg_stat[d].reg_busy = 0;
@@ -2230,16 +2416,44 @@ void sim_ooo::commit_stage(){
 				float_reg_stat[d].reg_busy = 0;
 			}
 		}
+		std::cout << "Check_END: " << check_end << '\n';
 
-		head_ROB++;
+		head_ROB = head_ROB + 1;
+		std::cout << "Incrementing ROB head:" << head_ROB << '\n';
+		std::cout << "Size of ROB: " << ROB_table.size() << '\n';
 		if(head_ROB == ROB_table.size()){
+			std::cout << "True here" << '\n';
 			head_ROB = 0;
 		}
-		
+
 		if(if_branch == 1){
+			std::cout << "True here as well" << '\n';
+			check_end = 0;
+			is_cleared = 1;
 			head_ROB = 0;
 		}
 	}
+	if(check_end == 1){
+		for(unsigned iter = 0; iter < ROB_table.size(); iter++){
+				std::cout << "Iter: " << iter << '\n';
+				std::cout << "Busy ROB:" << ROB_table[iter].rob_busy << '\n';
+				if(ROB_table[iter].rob_busy != 0){
+					std::cout << "Always true" << '\n';
+					flag_end = 0;
+					break;
+				}
+				else{
+					flag_end = 1;
+				}
+		}
+	}
+	if(flag_end == 1){
+			eop_end = 1;
+	}
+	else{
+		eop_end = 0;
+	}
+	std::cout << "Head of ROB: " << head_ROB << '\n';
 }
 //reset the state of the sim_oooulator
 
@@ -2284,6 +2498,69 @@ void sim_ooo::clear_reg(){
     float_reg_stat[i].reg_busy = 0;
     float_reg_stat[i].ROB_num = UNDEFINED;
   }
+}
+
+void sim_ooo::clear_exe(){
+	unsigned hold_int;
+	unsigned hold_mem;
+	unsigned hold_mul;
+	unsigned hold_div;
+	unsigned hold_add;
+
+	for(unsigned a = 0; a < create_exe_unit.size(); a++){
+		if(create_exe_unit[a].exe_unit == INTEGER){
+			hold_int = a;
+		}
+	}
+	for(unsigned a = 0; a < create_exe_unit.size(); a++){
+		if(create_exe_unit[a].exe_unit == MULTIPLIER){
+			hold_mul = a;
+		}
+	}
+	for(unsigned a = 0; a < create_exe_unit.size(); a++){
+		if(create_exe_unit[a].exe_unit == DIVIDER){
+			hold_div = a;
+		}
+	}
+	for(unsigned a = 0; a < create_exe_unit.size(); a++){
+		if(create_exe_unit[a].exe_unit == ADDER){
+			hold_add = a;
+		}
+	}
+	for(unsigned a = 0; a < create_exe_unit.size(); a++){
+		if(create_exe_unit[a].exe_unit == MEMORY){
+			hold_mem = a;
+		}
+	}
+	for (unsigned i = 0; i < big_add.size(); i++){
+		num_latency_add[i] = create_exe_unit[hold_add].latency_exe;
+		big_add[i].status = 1;
+		big_add[i].res_stat_num = UNDEFINED;
+	}
+
+	for (unsigned i = 0; i < big_int.size(); i++){
+		num_latency_int[i] = create_exe_unit[hold_int].latency_exe;
+		big_int[i].status = 1;
+		big_int[i].res_stat_num = UNDEFINED;
+	}
+
+	for (unsigned i = 0; i < big_div.size(); i++){
+		num_latency_div[i] = create_exe_unit[hold_div].latency_exe;
+		big_div[i].status = 1;
+		big_div[i].res_stat_num = UNDEFINED;
+	}
+
+	for (unsigned i = 0; i < big_mul.size(); i++){
+		num_latency_mul[i] = create_exe_unit[hold_mul].latency_exe;
+		big_mul[i].status = 1;
+		big_mul[i].res_stat_num = UNDEFINED;
+	}
+
+	for (unsigned i = 0; i < big_mul.size(); i++){
+		num_latency_mem[i] = create_exe_unit[hold_mem].latency_exe;
+		big_mem[i].status = 1;
+		big_mem[i].res_stat_num = UNDEFINED;
+	}
 }
 
 void sim_ooo::reset(){
@@ -2387,7 +2664,8 @@ void sim_ooo::print_rob(){
 				break;
 		}
 		if(ROB_table[i].state == INVALID || ROB_table[i].rob_dest == UNDEFINED)std::cout << setw(6) << "-";
-		else std::cout << setfill(' ') << setw(5) << "F" << ROB_table[i].rob_dest;
+		else if(ROB_table[i].dest_type == FLOAT_RES)std::cout << setfill(' ') << setw(5) << "F" << ROB_table[i].rob_dest;
+		else if(ROB_table[i].dest_type == INTEGER_RES)std::cout << setfill(' ') << setw(5) << "R" << ROB_table[i].rob_dest;
 		if(ROB_table[i].state == WRITE_RESULT)std::cout << setw(12) << ROB_table[i].rob_val << '\n';
 		else std::cout << setw(12) << "-" << '\n';
 	}
@@ -2408,7 +2686,7 @@ void sim_ooo::print_reservation_stations(){
 		if(RES_Stat_Int[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].res_pc;
 		else std::cout << setw(12) << "-";
 		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Vj!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].Vj;
-		else std::cout << setw(12) << "-";
+		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Vk!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Int[i].Vk;
 		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Int[i].res_busy == 1) && (RES_Stat_Int[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Int[i].Qj-1;
@@ -2495,13 +2773,13 @@ void sim_ooo::print_log(){
 }
 
 float sim_ooo::get_IPC(){
-	return UNDEFINED; //fill here
+	return float(num_instructions/num_cycles); //fill here
 }
 
 unsigned sim_ooo::get_instructions_executed(){
-	return UNDEFINED; //fill here
+	return  num_instructions; //fill here
 }
 
 unsigned sim_ooo::get_clock_cycles(){
-	return UNDEFINED; //fill here
+	return num_cycles; //fill here
 }
