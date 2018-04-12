@@ -79,7 +79,7 @@ int main(int argc, char **argv){
 
 	// runs program to completion
 	cout << "EXECUTING PROGRAM TO COMPLETION..." << endl << endl;
-	//ooo->run(); 
+	ooo->run(); 
 
 	cout << "PROGRAM TERMINATED\n";
 	cout << "===================" << endl << endl;

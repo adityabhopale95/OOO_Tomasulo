@@ -60,6 +60,7 @@ class sim_ooo{
 	unsigned eop_end;
 	unsigned num_instructions;
 	unsigned is_cleared;
+	unsigned is_store_ex;
 public:
 
 	/* Instantiates the simulator

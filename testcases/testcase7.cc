@@ -5,7 +5,7 @@
 
 using namespace std;
 
-/* Test case for pipelined simuator */ 
+/* Test case for pipelined simuator */
 /* DO NOT MODIFY */
 
 /* convert a float into an unsigned */
@@ -27,7 +27,7 @@ int main(int argc, char **argv){
 	unsigned i, j;
 
 	// instantiates sim_ooo with a 1MB data memory
-	sim_ooo *ooo = new sim_ooo(1024*1024,	//memory size 
+	sim_ooo *ooo = new sim_ooo(1024*1024,	//memory size
 				   6,           //rob size
 				   1, 2, 2, 3); //int, add, mult, load reservation stations
 
@@ -48,15 +48,15 @@ int main(int argc, char **argv){
 
 	//initialize data memory and prints its content (for the specified address ranges)
         for (i = 0xA000, j=1; i<0xA020; i+=4, j+=1) ooo->write_memory(i,float2unsigned((float)(j)));
-	
+
 	cout << "\nBEFORE PROGRAM EXECUTION..." << endl;
 	cout << "======================================================================" << endl << endl;
-	
+
 	//prints the value of the memory and registers
 	ooo->print_registers();
 	ooo->print_memory(0xA000, 0xA020);
 
-	// executes the program	
+	// executes the program
 	cout << "\n*****************************" << endl;
 	cout << "STARTING THE PROGRAM..." << endl;
 	cout << "*****************************" << endl << endl;
@@ -74,7 +74,7 @@ int main(int argc, char **argv){
 
 	// runs program to completion
 	cout << "EXECUTING PROGRAM TO COMPLETION..." << endl << endl;
-	ooo->run(); 
+	//ooo->run(); 
 
 	cout << "PROGRAM TERMINATED\n";
 	cout << "===================" << endl << endl;
@@ -86,7 +86,7 @@ int main(int argc, char **argv){
 
 	//print the execution log
 	ooo->print_log();
-	
+
 	cout << endl;
 
 	// prints the number of instructions executed and IPC

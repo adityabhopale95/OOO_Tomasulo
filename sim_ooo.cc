@@ -54,6 +54,8 @@ struct RES_Stat_struc{
 	unsigned if_depend_Vk;
 	unsigned wr_done;
 	unsigned imm_val;
+	unsigned address_raw;
+	unsigned from_forward;
 	res_type_t res_dest_type;
 	exe_unit_t op;
 };
@@ -83,7 +85,7 @@ std::map<string, int> opcode_map;
 every_line every_instruct;
 
 ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEFINED,NOTASSIGNED,0};
-RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,UNDEFINED,NOTASSIGNED,NOTVALID};
+RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,0,UNDEFINED,UNDEFINED,UNDEFINED,NOTASSIGNED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,1};
 pack_of_exec execution_structure;
 std::vector<REGISTER_Stat> int_reg_stat;
@@ -110,6 +112,9 @@ std::vector<int> add_ex_done;
 std::vector<int> mul_ex_done;
 std::vector<int> div_ex_done;
 std::vector<int> ld_ex_done;
+
+std::vector<int> needs_ex_ld;
+std::vector<int> ld_step1;
 
 std::vector<ROB_struc> ROB_table;
 
@@ -223,6 +228,8 @@ sim_ooo::sim_ooo(unsigned mem_size,
     RES_Stat_Load.push_back(RES_Temp);
 		mem_result.push_back(UNDEFINED);
 		flag_mem.push_back(0);
+		needs_ex_ld.push_back(UNDEFINED);
+		ld_step1.push_back(0);
   }
 
   int_reg_stat.resize(NUM_GP_REGISTERS);
@@ -240,6 +247,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
 	check_end = 0;
 	num_instructions = 0;
 	is_cleared = 0;
+	is_store_ex = 0;
 }
 
 sim_ooo::~sim_ooo(){
@@ -543,31 +551,6 @@ void sim_ooo::issue(unsigned temp_PC){
 	unsigned h_val;
 	int fake_head;
 
-
-	for(unsigned it = 1; it < RES_Stat_Add.size(); it++){
-		if(RES_Stat_Add[it].wr_done == 1){
-			RES_Stat_Add[it].wr_done = 1;
-		}
-	}
-	for(unsigned it = 1; it < RES_Stat_Int.size(); it++){
-		if(RES_Stat_Int[it].wr_done == 1){
-			RES_Stat_Int[it].wr_done = 0;
-			std::cout << "Wasted a life here for i: " << it << '\n';
-		}
-	}
-
-	for(unsigned it = 1; it < RES_Stat_Mul.size(); it++){
-		if(RES_Stat_Mul[it].wr_done == 1){
-			RES_Stat_Mul[it].wr_done = 0;
-		}
-	}
-
-	for(unsigned it = 1; it < RES_Stat_Load.size(); it++){
-		if(RES_Stat_Load[it].wr_done == 1){
-			RES_Stat_Load[it].wr_done = 0;
-		}
-	}
-
 	std::cout << "Value of HEAD: " << head_ROB << '\n';
 	for(unsigned i = head_ROB; i < ROB_table.size(); i++){
 		std::cout << "ROB_BUSY: " << ROB_table[i].rob_busy << '\n';
@@ -595,14 +578,15 @@ void sim_ooo::issue(unsigned temp_PC){
 					rob_yes = 0;
 					break;
 				}*/
-				if(j == (head_ROB-1)){
+				/*if(j == (head_ROB-1)){
 					if(ROB_table[(head_ROB-1)].if_commit == 1){
+						std::cout << "Cannot issue ROB" << '\n';
 						ROB_table[(head_ROB-1)].if_commit = 0;
 						rob_yes = 0;
 						issue_success = 0;
 						return;
 					}
-				}
+				}*/
 				current_B = j;
 				rob_yes = 1;
 				break;
@@ -613,8 +597,30 @@ void sim_ooo::issue(unsigned temp_PC){
 		}
 	}
 
+	for(unsigned it = 1; it < RES_Stat_Int.size(); it++){
+		if(RES_Stat_Int[it].res_busy!=1){
+			if(RES_Stat_Int[it].wr_done == 1){
+				RES_Stat_Int[it].wr_done = 0;
+				std::cout << "Wasted a life here for i: " << it << '\n';
+				res_yes_int = 0;
+				continue;
+			}
+			current_R_int = it;
+			res_yes_int = 1;
+			break;
+		}
+		else{
+			res_yes_int = 0;
+		}
+	}
+
 	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
 		if(RES_Stat_Int[i].res_busy!=1){
+			if(RES_Stat_Int[i].use_ex == 1){
+				RES_Stat_Int[i].use_ex = 0;
+				res_yes_int = 0;
+				continue;
+			}
 			current_R_int = i;
 			res_yes_int = 1;
 			break;
@@ -624,8 +630,28 @@ void sim_ooo::issue(unsigned temp_PC){
 		}
 	}
 
+	for(unsigned it = 1; it < RES_Stat_Mul.size(); it++){
+		if(RES_Stat_Mul[it].res_busy!=1){
+			if(RES_Stat_Mul[it].wr_done == 1){
+				RES_Stat_Mul[it].wr_done = 0;
+				res_yes_mul = 0;
+				continue;
+			}
+			current_R_mul = it;
+			res_yes_mul = 1;
+		}
+		else{
+			res_yes_mul = 0;
+		}
+	}
+
 	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
 		if(RES_Stat_Mul[i].res_busy!=1){
+			if(RES_Stat_Mul[i].use_ex == 1){
+				RES_Stat_Mul[i].use_ex = 0;
+				res_yes_mul = 0;
+				continue;
+			}
 			current_R_mul = i;
 			res_yes_mul = 1;
 			break;
@@ -635,8 +661,28 @@ void sim_ooo::issue(unsigned temp_PC){
 		}
 	}
 
+	for(unsigned it = 1; it < RES_Stat_Add.size(); it++){
+		if(RES_Stat_Add[it].res_busy!=1){
+			if(RES_Stat_Add[it].wr_done == 1){
+				RES_Stat_Add[it].wr_done = 0;
+				res_yes_add = 0;
+				continue;
+			}
+			current_R_add = it;
+			res_yes_add = 1;
+		}
+		else{
+			res_yes_add = 0;
+		}
+	}
+
 	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
 		if(RES_Stat_Add[i].res_busy!=1){
+			if(RES_Stat_Add[i].use_ex == 1){
+				RES_Stat_Add[i].use_ex = 0;
+				res_yes_add = 0;
+				continue;
+			}
 			current_R_add = i;
 			res_yes_add = 1;
 			break;
@@ -646,8 +692,28 @@ void sim_ooo::issue(unsigned temp_PC){
 		}
 	}
 
+	for(unsigned it = 1; it < RES_Stat_Load.size(); it++){
+		if(RES_Stat_Load[it].res_busy!=1){
+			if(RES_Stat_Load[it].wr_done == 1){
+				RES_Stat_Load[it].wr_done = 0;
+				res_yes_load = 0;
+				continue;
+			}
+			current_R_ld = it;
+			res_yes_load = 1;
+		}
+		else{
+			res_yes_load = 0;
+		}
+	}
+
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy!=1){
+			if(RES_Stat_Load[i].use_ex == 1){
+				RES_Stat_Load[i].use_ex = 0;
+				res_yes_load = 0;
+				continue;
+			}
 			current_R_ld = i;
 			res_yes_load = 1;
 			break;
@@ -890,6 +956,7 @@ void sim_ooo::issue(unsigned temp_PC){
 			if(res_yes_int == 1 && rob_yes == 1){
 				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
 					if(int_ex_done[iter] == 1){
+						std::cout << "Made the ex unit available" << '\n';
 						int_ex_done[iter] = 0;
 					}
 				}
@@ -1374,19 +1441,20 @@ void sim_ooo::issue(unsigned temp_PC){
 				if(int_reg_stat[hold_val1].reg_busy){
 	        h_val = int_reg_stat[hold_val1].ROB_num;
 					if(ROB_table[h_val].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
-						RES_Stat_Load[current_R_ld].Qj = 0;
-						RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
+						RES_Stat_Load[current_R_ld].Qk = 0;
+						RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = h_val+1;
-						RES_Stat_Load[current_R_ld].if_depend_Vj = 1;
+						RES_Stat_Load[current_R_ld].Vk = UNDEFINED;
+						RES_Stat_Load[current_R_ld].Qk = h_val+1;
+						RES_Stat_Load[current_R_ld].if_depend_Vk = 1;
 					}
 	      }
 				else{
-					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
-					RES_Stat_Load[current_R_ld].Qj = 0;
-					RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
+					RES_Stat_Load[current_R_ld].Vk = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qk = 0;
+					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 				}
 				RES_Stat_Load[current_R_ld].res_busy = 1;
 				RES_Stat_Load[current_R_ld].res_dest = current_B;
@@ -1400,19 +1468,20 @@ void sim_ooo::issue(unsigned temp_PC){
 				if(int_reg_stat[hold_val2].reg_busy){
 					h_val = int_reg_stat[hold_val2].ROB_num;
 					if(ROB_table[h_val].ready){
-						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
-						RES_Stat_Load[current_R_ld].Qk = 0;
-						RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+						RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qk = h_val+1;
-						RES_Stat_Load[current_R_ld].if_depend_Vk = 1;
+						RES_Stat_Load[current_R_ld].Vj = UNDEFINED;
+						RES_Stat_Load[current_R_ld].Qj = h_val+1;
+						RES_Stat_Load[current_R_ld].if_depend_Vj = 1;
 					}
 				}
 				else{
-					RES_Stat_Load[current_R_ld].Vk = register_file[hold_val2];
-					RES_Stat_Load[current_R_ld].Qk = 0;
-					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
+					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val2];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+					RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
 				}
 				RES_Stat_Load[current_R_ld].res_dest_type = INTEGER_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
@@ -1450,19 +1519,20 @@ void sim_ooo::issue(unsigned temp_PC){
 				if(int_reg_stat[hold_val1].reg_busy){
 	        h_val = int_reg_stat[hold_val1].ROB_num;
 					if(ROB_table[h_val].ready){
-						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
-						RES_Stat_Load[current_R_ld].Qj = 0;
-						RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
+						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
+						RES_Stat_Load[current_R_ld].Qk = 0;
+						RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qj = h_val+1;
-						RES_Stat_Load[current_R_ld].if_depend_Vj = 1;
+						RES_Stat_Load[current_R_ld].Vk = UNDEFINED;
+						RES_Stat_Load[current_R_ld].Qk = h_val+1;
+						RES_Stat_Load[current_R_ld].if_depend_Vk = 1;
 					}
 	      }
 				else{
-					RES_Stat_Load[current_R_ld].Vj = register_file[hold_val1];
-					RES_Stat_Load[current_R_ld].Qj = 0;
-					RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
+					RES_Stat_Load[current_R_ld].Vk = register_file[hold_val1];
+					RES_Stat_Load[current_R_ld].Qk = 0;
+					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
 				}
 				RES_Stat_Load[current_R_ld].res_busy = 1;
 				RES_Stat_Load[current_R_ld].res_dest = current_B;
@@ -1476,24 +1546,25 @@ void sim_ooo::issue(unsigned temp_PC){
 				if(float_reg_stat[hold_val2].reg_busy){
 					h_val = float_reg_stat[hold_val2].ROB_num;
 					if(ROB_table[h_val].ready){
-						RES_Stat_Load[current_R_ld].Vk = ROB_table[h_val].rob_val;
-						RES_Stat_Load[current_R_ld].Qk = 0;
-						RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
+						RES_Stat_Load[current_R_ld].Vj = ROB_table[h_val].rob_val;
+						RES_Stat_Load[current_R_ld].Qj = 0;
+						RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
 					}
 					else{
-						RES_Stat_Load[current_R_ld].Qk = h_val+1;
-						RES_Stat_Load[current_R_ld].if_depend_Vk = 1;
+						RES_Stat_Load[current_R_ld].Vj = UNDEFINED;
+						RES_Stat_Load[current_R_ld].Qj = h_val+1;
+						RES_Stat_Load[current_R_ld].if_depend_Vj = 1;
 					}
 				}
 				else{
-					RES_Stat_Load[current_R_ld].Vk = float_reg_file[hold_val2];
-					RES_Stat_Load[current_R_ld].Qk = 0;
-					RES_Stat_Load[current_R_ld].if_depend_Vk = 0;
+					RES_Stat_Load[current_R_ld].Vj = float_reg_file[hold_val2];
+					RES_Stat_Load[current_R_ld].Qj = 0;
+					RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
 				}
 				RES_Stat_Load[current_R_ld].res_dest_type = FLOAT_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
-				RES_Stat_Load[current_R_ld].op_num = temp_PC*4 + base_add;
-				RES_Stat_Load[current_R_ld].res_pc = temp_PC;
+				RES_Stat_Load[current_R_ld].op_num = temp_PC;
+				RES_Stat_Load[current_R_ld].res_pc = temp_PC*4 + base_add;
 			}
 
 			else{
@@ -1544,7 +1615,7 @@ void sim_ooo::execute_ins(){
 									continue;
 								}
 								ROB_table[RES_Stat_Int[i].res_dest].state = EXECUTE;
-								RES_Stat_Int[i].use_ex = sel_int_unit;
+								RES_Stat_Int[i].use_ex = 1;
 								big_int[sel_int_unit].status = 0;
 								big_int[sel_int_unit].res_stat_num = i;
 								//num_latency_int[sel_int_unit]--;
@@ -1695,7 +1766,7 @@ void sim_ooo::execute_ins(){
 				num_latency_int[sel_int_unit] = create_exe_unit[hold_int].latency_exe;
 				big_int[sel_int_unit].status = 1;
 				int_ex_done[sel_int_unit] = 1;
-				RES_Stat_Int[big_int[sel_int_unit].res_stat_num].use_ex = UNDEFINED;
+				//RES_Stat_Int[big_int[sel_int_unit].res_stat_num].use_ex = UNDEFINED;
 			}
 			//break;
 		}
@@ -1732,6 +1803,7 @@ void sim_ooo::execute_ins(){
 
 								std::cout << "Into Execute" << '\n';
 								ROB_table[RES_Stat_Add[i].res_dest].state = EXECUTE;
+								RES_Stat_Add[i].use_ex = 1;
 								big_add[sel_add_unit].status = 0;
 								big_add[sel_add_unit].res_stat_num = i;
 								break;
@@ -1809,6 +1881,7 @@ void sim_ooo::execute_ins(){
 
 								big_mul[sel_mul_unit].status = 0;
 								ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
+								RES_Stat_Mul[i].use_ex = 1;
 								big_mul[sel_mul_unit].res_stat_num = i;
 								break;
 							}
@@ -1833,6 +1906,7 @@ void sim_ooo::execute_ins(){
 							}
 							big_div[sel_div_unit].status = 0;
 							ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
+							RES_Stat_Mul[i].use_ex = 1;
 							big_div[sel_div_unit].res_stat_num = i;
 							break;
 						}
@@ -1905,9 +1979,131 @@ void sim_ooo::execute_ins(){
 			}
 		}
 	}
-	unsigned store_check;
+	unsigned store_check = 0;
+	//unsigned ld_step1;
 	unsigned sw_check_head;
 
+	/*for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(RES_Stat_Load[i].res_busy == 1){
+			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+				case LWS:
+					if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
+						for(unsigned a = (head_ROB+1); a < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a++){
+							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+							|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)) {
+								store_check = 1;
+								break;
+							}
+							else{
+								store_check = 0;
+							}
+						}
+					}
+					else{
+						for(unsigned a = 0; a < head_ROB; a++){
+							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+							|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+								store_check = 1;
+								break;
+							}
+							else{
+								store_check = 0;
+							}
+						}
+					}
+
+					if((RES_Stat_Load[i].Qj == 0)&&(store_check != 1)){
+						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						ROB_table[RES_Stat_Load[i].res_dest].state = ISSUE;
+						ld_step1[i] = 1;
+					}
+					break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(ld_step1[i]){
+			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
+				for(unsigned a = (head_ROB); a < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a++){
+					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+					|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)) {
+						if(RES_Stat_Load[i].res_A ==  ROB_table[a].rob_dest){
+							needs_ex_ld[i] = 0;
+							RES_Stat_Load[i].address_raw = a+1;
+						}
+						else{
+							needs_ex_ld[i] = 1;
+							RES_Stat_Load[i].address_raw = 0;
+						}
+					}
+				}
+			}
+			else{
+				for(unsigned a = 0; a < head_ROB; a++){
+					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+					|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+							needs_ex_ld[i] = 0;
+							RES_Stat_Load[i].address_raw = a+1;
+						}
+						else{
+							needs_ex_ld[i] = 1;
+							RES_Stat_Load[i].address_raw = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(needs_ex_ld[i] == 1){
+			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
+				if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
+					RES_Stat_Load[i].if_depend_Vj = 0;
+					RES_Stat_Load[i].if_depend_Vk = 0;
+					for(unsigned it = 0; it < ld_ex_done.size(); it++){
+						if(ld_ex_done[it] == 1){
+							ld_ex_done[it] = 0;
+						}
+					}
+					continue;
+				}
+				switch (RES_Stat_Load[i].op) {
+					case MEMORY:
+
+						if(is_store_ex == 0){
+
+							for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+								if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE){
+									if(ld_ex_done[sel_ld_unit] == 1){
+										ld_ex_done[sel_ld_unit] = 0;
+										continue;
+									}
+
+									big_mem[sel_ld_unit].status = 0;
+									ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
+									RES_Stat_Load[i].use_ex = 1;
+									big_mem[sel_ld_unit].res_stat_num = i;
+									needs_ex_ld[i] = UNDEFINED;
+								}
+							}
+					}
+				}
+			}
+		}
+		else if(needs_ex_ld[i] == 0 && RES_Stat_Load[i].address_raw == 0){
+			flag_mem[i] = 1;
+			mem_result[i] = RES_Stat_Load[i].from_forward;
+			ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
+		}
+	}
+*/
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy == 1){
 			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
@@ -1940,25 +2136,28 @@ void sim_ooo::execute_ins(){
 								big_mem[sel_ld_unit].status = 0;
 								std::cout << "Value of ROB index: " << RES_Stat_Load[i].res_dest << '\n';
 								ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
-								RES_Stat_Load[i].use_ex = sel_ld_unit;
+								RES_Stat_Load[i].use_ex = 1;
 								big_mem[sel_ld_unit].res_stat_num = i;
-								num_latency_mem[sel_ld_unit]--;
+								//num_latency_mem[sel_ld_unit]--;
 								switch (opcode_map[instruction_memory[RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].op_num].op_code]) {
 									case LW:
 									case LWS:
-										/*for(unsigned iter_ld = big_mem[sel_ld_unit].res_stat_num-1; iter_ld > 0; iter_ld--){
-											if((opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num].op_code] == SW)
-											|| (opcode_map[instruction_memory[RES_Stat_Load[iter_ld].op_num].op_code] == SWS)) {
-												store_check = 1;
-												break;
+										if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > head_ROB){
+											for(unsigned iter_ld = head_ROB; iter_ld < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1) ; iter_ld++){
+												if((opcode_map[instruction_memory[ROB_table[iter_ld].rob_temp_pc].op_code] == SW)
+												|| (opcode_map[instruction_memory[ROB_table[iter_ld].rob_temp_pc].op_code] == SWS)) {
+													store_check = 1;
+													break;
+												}
+												else{
+													store_check = 0;
+												}
 											}
-											else{
-												store_check = 0;
-											}
-										}*/
-//										if((RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0) && (store_check != 1)){
-										if(RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0){
+										}
+										if((RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0) && (store_check != 1)){
+//										if(RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0){
 											RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
+
 										}
 										break;
 
@@ -1976,8 +2175,36 @@ void sim_ooo::execute_ins(){
 			}
 		}
 	}
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(RES_Stat_Load[i].res_busy){
+			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+				case SW:
+					if((RES_Stat_Load[i].Qj == 0) && (opcode_map[instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code] == SW)){
+						ROB_table[head_ROB].rob_dest = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						ROB_table[head_ROB].dest_type = NOTASSIGNED;
+						ROB_table[head_ROB].state = EXECUTE;
+					}
+					break;
+
+				case SWS:
+					if((RES_Stat_Load[i].Qj == 0) && opcode_map[instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code] == SWS){
+						ROB_table[head_ROB].rob_dest = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						ROB_table[head_ROB].dest_type = NOTASSIGNED;
+						ROB_table[head_ROB].state = EXECUTE;
+					}
+					break;
+
+				}
+		}
+	}
+
 	for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+		std::cout << "Status of Mem when executing: " << big_mem[sel_ld_unit].status << '\n';
 		if(big_mem[sel_ld_unit].status == 0){
+			std::cout << "Latency of mem unit remaining: " << num_latency_mem[sel_ld_unit] << '\n';
 			if(num_latency_mem[sel_ld_unit] > 1){
 				std::cout << "The State in ROB: " << ROB_table[0].state << endl;
 				std::cout << "Decrementing Latency" << '\n';
@@ -2000,7 +2227,7 @@ void sim_ooo::execute_ins(){
 						mem_result[big_mem[sel_ld_unit].res_stat_num] = char2unsigned(data_memory + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A);
 						break;
 
-					case SWS:
+					/*case SWS:
 					case SW:
 						if((opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SW)
 						||(opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SWS)){
@@ -2010,19 +2237,19 @@ void sim_ooo::execute_ins(){
 							sw_check_head = 0;
 						}
 						if((RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0) && (sw_check_head == 1)){
-							mem_result[big_mem[sel_ld_unit].res_stat_num] = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
+						//	ROB_table[RES_Stat_Load[]] = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
 						}
-						break;
+						break;*/
 				}
-			}
-			for(unsigned a = 0; a < create_exe_unit.size(); a++){
-				if(create_exe_unit[a].exe_unit == MEMORY){
-					hold_mem = a;
+				for(unsigned a = 0; a < create_exe_unit.size(); a++){
+					if(create_exe_unit[a].exe_unit == MEMORY){
+						hold_mem = a;
+					}
 				}
+				ld_ex_done[sel_ld_unit] = 1;
+				num_latency_mem[sel_ld_unit] = create_exe_unit[hold_mem].latency_exe;
+				big_mem[sel_ld_unit].status = 1;
 			}
-			ld_ex_done[sel_ld_unit] = 1;
-			num_latency_mem[sel_ld_unit] = create_exe_unit[hold_mem].latency_exe;
-			big_mem[sel_ld_unit].status = 1;
 		}
 	}
 }
@@ -2090,7 +2317,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Int[i].res_A = UNDEFINED;
 				RES_Stat_Int[i].op_num = UNDEFINED;
 				RES_Stat_Int[i].if_branch = UNDEFINED;
-				RES_Stat_Int[i].use_ex = 0;
+				RES_Stat_Int[i].use_ex = 1;
 				RES_Stat_Int[i].op = NOTVALID;
 				RES_Stat_Int[i].wr_done = 1;
 				flag_int[i] = 0;
@@ -2144,6 +2371,7 @@ void sim_ooo::write_res(){
 			  std::cout << "Value of ROB:" << RES_Stat_Add[i].res_dest << '\n';
 				ROB_table[RES_Stat_Add[i].res_dest].rob_val = add_result[i];
 				add_result[i] = UNDEFINED;
+				//int_ex_done[RES_Stat_Add[i].use_ex] = 1;
 				ROB_table[b_rob-1].ready = 1;
 				ROB_table[b_rob-1].state = WRITE_RESULT;
 				RES_Stat_Add[i].res_busy = 0;
@@ -2155,7 +2383,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Add[i].res_A = UNDEFINED;
 				RES_Stat_Add[i].op_num = UNDEFINED;
 				RES_Stat_Add[i].if_branch = UNDEFINED;
-				RES_Stat_Add[i].use_ex = 0;
+				RES_Stat_Add[i].use_ex = 1;
 				RES_Stat_Add[i].op = NOTVALID;
 				RES_Stat_Add[i].wr_done = 1;
 				flag_add[i] = 0;
@@ -2225,7 +2453,7 @@ void sim_ooo::write_res(){
 				RES_Stat_Mul[i].res_A = UNDEFINED;
 				RES_Stat_Mul[i].op_num = UNDEFINED;
 				RES_Stat_Mul[i].if_branch = UNDEFINED;
-				RES_Stat_Mul[i].use_ex = 0;
+				RES_Stat_Mul[i].use_ex = 1;
 				RES_Stat_Mul[i].op = NOTVALID;
 				RES_Stat_Mul[i].wr_done = 1;
 				flag_mul[i] = 0;
@@ -2311,7 +2539,7 @@ void sim_ooo::write_res(){
 						RES_Stat_Load[i].res_A = UNDEFINED;
 						RES_Stat_Load[i].op_num = UNDEFINED;
 						RES_Stat_Load[i].if_branch = UNDEFINED;
-						RES_Stat_Load[i].use_ex = 0;
+						RES_Stat_Load[i].use_ex = 1;
 						RES_Stat_Load[i].op = NOTVALID;
 						RES_Stat_Load[i].wr_done = 1;
 						flag_mem[i] = 0;
@@ -2321,7 +2549,14 @@ void sim_ooo::write_res(){
 
 				case SW:
 				case SWS:
+					b_rob = RES_Stat_Load[i].res_dest + 1;
 					if(RES_Stat_Load[i].Qk == 0){
+						for(unsigned j = 0; j < RES_Stat_Load.size(); j++){
+							if(RES_Stat_Load[j].address_raw == b_rob){
+								RES_Stat_Load[j].from_forward = RES_Stat_Load[j].Vk;
+							}
+						}
+
 						ROB_table[head_ROB].rob_val = RES_Stat_Load[i].Vk;
 						ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
 						RES_Stat_Load[i].res_busy = 0;
@@ -2333,7 +2568,7 @@ void sim_ooo::write_res(){
 						RES_Stat_Load[i].res_A = UNDEFINED;
 						RES_Stat_Load[i].op_num = UNDEFINED;
 						RES_Stat_Load[i].if_branch = UNDEFINED;
-						RES_Stat_Load[i].use_ex = 0;
+						RES_Stat_Load[i].use_ex = 1;
 						RES_Stat_Load[i].op = NOTVALID;
 						RES_Stat_Load[i].wr_done = 1;
 						flag_mem[i] = 0;
@@ -2350,6 +2585,7 @@ void sim_ooo::commit_stage(){
 	unsigned if_branch = 0;
 	unsigned flag_end = 0;
 	is_cleared = 0;
+	unsigned hold_mem;
 	if(ROB_table[head_ROB].ready == 1){
 		std::cout << "PC of head: " << hex << ROB_table[head_ROB].rob_pc << '\n';
 		d = ROB_table[head_ROB].rob_dest;
@@ -2375,8 +2611,40 @@ void sim_ooo::commit_stage(){
 
 			case SW:
 			case SWS:
-				num_instructions++;
-				unsigned2char(ROB_table[head_ROB].rob_val,data_memory+ROB_table[head_ROB].rob_dest);
+				for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+						if(big_mem[sel_ld_unit].status == 1 && ROB_table[head_ROB].state == WRITE_RESULT){
+							if(ld_ex_done[sel_ld_unit] == 1){
+								ld_ex_done[sel_ld_unit] = 0;
+								continue;
+							}
+							big_mem[sel_ld_unit].status = 0;
+							ROB_table[RES_Stat_Load[head_ROB].res_dest].state = COMMIT;
+//							big_mem[sel_ld_unit].res_stat_num = ;
+							is_store_ex = 1;
+							num_instructions++;
+					}
+				}
+
+				for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+					if(big_mem[sel_ld_unit].status == 0){
+						if(num_latency_mem[sel_ld_unit] > 1){
+							num_latency_mem[sel_ld_unit]--;
+							flag_mem[big_mem[sel_ld_unit].res_stat_num] = 0;
+						}
+						else{
+							unsigned2char(ROB_table[head_ROB].rob_val,data_memory+ROB_table[head_ROB].rob_dest);
+							big_mem[sel_ld_unit].status = 1;
+							ld_ex_done[sel_ld_unit] = 1;
+							for(unsigned a = 0; a < create_exe_unit.size(); a++){
+								if(create_exe_unit[a].exe_unit == MEMORY){
+									hold_mem = a;
+								}
+							}
+							num_latency_mem[sel_ld_unit] = create_exe_unit[hold_mem].latency_exe;
+							is_store_ex = 0;
+						}
+					}
+				}
 				break;
 
 
@@ -2407,6 +2675,7 @@ void sim_ooo::commit_stage(){
 				num_instructions++;
 				float_reg_file[d] = unsigned2float(ROB_table[head_ROB].rob_val);
 				break;
+
 			default:
 				break;
 		}
@@ -2720,7 +2989,7 @@ void sim_ooo::print_reservation_stations(){
 		if(RES_Stat_Load[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].res_pc;
 		else std::cout << setw(12) << "-";
 		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Vj!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].Vj;
-		else std::cout << setw(12) << "-";
+		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Vk!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Load[i].Vk;
 		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Load[i].res_busy == 1) && (RES_Stat_Load[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Load[i].Qj-1;
@@ -2740,7 +3009,7 @@ void sim_ooo::print_reservation_stations(){
 		if(RES_Stat_Add[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].res_pc;
 		else std::cout << setw(12) << "-";
 		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Vj!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].Vj;
-		else std::cout << setw(12) << "-";
+		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Vk!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Add[i].Vk;
 		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Add[i].res_busy == 1) && (RES_Stat_Add[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Add[i].Qj-1;
@@ -2760,7 +3029,7 @@ void sim_ooo::print_reservation_stations(){
 		if(RES_Stat_Mul[i].res_busy == 1)std::cout << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].res_pc;
 		else std::cout << setw(12) << "-";
 		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Vj!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].Vj;
-		else std::cout << setw(12) << "-";
+		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Vk!=UNDEFINED))std::cout << setfill(' ') << setw(4) << hex << "0x" << setw(8) << setfill('0') << RES_Stat_Mul[i].Vk;
 		else std::cout << setfill(' ') << setw(12) << "-";
 		if((RES_Stat_Mul[i].res_busy == 1) && (RES_Stat_Mul[i].Qj!=0))std::cout << setfill(' ') << setw(6) << RES_Stat_Mul[i].Qj-1;
