@@ -116,6 +116,8 @@ std::vector<int> ld_ex_done;
 std::vector<int> needs_ex_ld;
 std::vector<int> ld_step1;
 
+std::vector<int> ld_current_exe;
+
 std::vector<ROB_struc> ROB_table;
 
 std::vector<exe_struc> big_int;
@@ -230,6 +232,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
 		flag_mem.push_back(0);
 		needs_ex_ld.push_back(UNDEFINED);
 		ld_step1.push_back(0);
+		ld_current_exe.push_back(0);
   }
 
   int_reg_stat.resize(NUM_GP_REGISTERS);
@@ -1985,44 +1988,13 @@ void sim_ooo::execute_ins(){
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy == 1){
-			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
-				case LW:
-				case LWS:
-					if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
-						for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
-							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-							||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-								if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
-									store_check = 1;
-									break;
-								}
-								else{
-									store_check = 0;
-								}
-							}
-							else{
-								store_check = 0;
-							}
-						}
-					}
-					else{
-						for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
-							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-							||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-								if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
-									store_check = 1;
-									break;
-								}
-								else{
-									store_check = 0;
-								}
-							}
-							else{
-								store_check = 0;
-							}
-						}
-						if(store_check == 0){
-							for(unsigned a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
+			if(ld_current_exe[i] == 0){
+				switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+					case LW:
+					case LWS:
+						if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) >= (head_ROB)){
+							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
+								std::cout << "Value of a in this condition: " << a << '\n';
 								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 									if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
@@ -2034,25 +2006,70 @@ void sim_ooo::execute_ins(){
 									}
 								}
 								else{
-									store_check = 0;
+									std::cout << "No stores here" << '\n';
+									store_check = 1;
 								}
 							}
+						}
+						else{
+							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+								std::cout << "Value of a: " << a << '\n';
+								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+									std::cout << "There is a store" << '\n';
+									if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
+										std::cout << "Register busy" << '\n';
+										store_check = 1;
+										break;
+									}
+									else{
+										std::cout << "Register not busy" << '\n';
+										store_check = 0;
+									}
+								}
+								else{
+									std::cout << "This was true" << '\n';
+									store_check = 1;
+								}
+							}
+							if(store_check == 0){
+								for(int a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
+									if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+									||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+										if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
+											store_check = 1;
+											break;
+										}
+										else{
+											store_check = 0;
+										}
+									}
+									else{
+										store_check = 1;
+									}
+								}
+						}
 					}
-				}
 
-				if(Qj == 0 && store_check == 1){
-					RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
-					ld_step1[i] = 1;
+					if(RES_Stat_Load[i].Qj == 0 && store_check == 1){
+						std::cout << "This condition was satisfied" << '\n';
+						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						ld_step1[i] = 1;
+						ld_current_exe[i] = 1;
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(ld_step1[i] == 1){
-			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
-				for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
+			std::cout << "Then I got here since first step of load was satisfied" << '\n';
+			std::cout << "Value of i: " << i << '\n';
+			std::cout << "Value of entry: " << RES_Stat_Load[i].res_dest << '\n';
+			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) >= (head_ROB)){
+				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
@@ -2064,11 +2081,15 @@ void sim_ooo::execute_ins(){
 							needs_ex_ld[i] = 1;
 							RES_Stat_Load[i].address_raw = 0;
 						}
+					}
+					else{
+						needs_ex_ld[i] = 1;
+						RES_Stat_Load[i].address_raw = 0;
 					}
 				}
 			}
 			else{
-				for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
@@ -2081,9 +2102,13 @@ void sim_ooo::execute_ins(){
 							needs_ex_ld[i] = 1;
 						}
 					}
+					else{
+						needs_ex_ld[i] = 1;
+						RES_Stat_Load[i].address_raw = 0;
+					}
 				}
 				if(needs_ex_ld[i] == 1){
-					for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+					for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
 						if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 						||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 							if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
@@ -2099,45 +2124,41 @@ void sim_ooo::execute_ins(){
 					}
 				}
 			}
+			ld_step1[i] = 0;
 		}
 	}
 
-	
-
-
-	/*for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(RES_Stat_Load[i].res_busy == 1){
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(needs_ex_ld[i] == 1){
+			if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
+				RES_Stat_Load[i].if_depend_Vj = 0;
+				RES_Stat_Load[i].if_depend_Vk = 0;
+				for(unsigned it = 0; it < ld_ex_done.size(); it++){
+					if(ld_ex_done[it] == 1){
+						ld_ex_done[it] = 0;
+					}
+				}
+				continue;
+			}
 			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+				case LW:
 				case LWS:
-					if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
-						for(unsigned a = (head_ROB+1); a < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a++){
-							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-							|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)) {
-								store_check = 1;
+					std::cout << "Ikde aala re baba" << '\n';
+					if(is_store_ex == 0){
+						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+							if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE){
+								if(ld_ex_done[sel_ld_unit] == 1){
+									ld_ex_done[sel_ld_unit] = 0;
+									continue;
+								}
+								big_mem[sel_ld_unit].status = 0;
+								ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
+								RES_Stat_Load[i].use_ex = 1;
+								big_mem[sel_ld_unit].res_stat_num = i;
+								needs_ex_ld[i] = UNDEFINED;
 								break;
 							}
-							else{
-								store_check = 0;
-							}
 						}
-					}
-					else{
-						for(unsigned a = 0; a < head_ROB; a++){
-							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-							|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-								store_check = 1;
-								break;
-							}
-							else{
-								store_check = 0;
-							}
-						}
-					}
-
-					if((RES_Stat_Load[i].Qj == 0)&&(store_check != 1)){
-						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
-						ROB_table[RES_Stat_Load[i].res_dest].state = ISSUE;
-						ld_step1[i] = 1;
 					}
 					break;
 
@@ -2145,44 +2166,50 @@ void sim_ooo::execute_ins(){
 					break;
 			}
 		}
+		else if(needs_ex_ld[i] == 0){
+			if(RES_Stat_Load[i].address_raw != 0){
+				mem_result[i] = RES_Stat_Load[i].from_forward;
+				ld_current_exe[i] = 0;
+			}
+		}
 	}
 
-	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(ld_step1[i]){
-			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
-				for(unsigned a = (head_ROB); a < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a++){
-					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-					|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)) {
-						if(RES_Stat_Load[i].res_A ==  ROB_table[a].rob_dest){
-							needs_ex_ld[i] = 0;
-							RES_Stat_Load[i].address_raw = a+1;
-						}
-						else{
-							needs_ex_ld[i] = 1;
-							RES_Stat_Load[i].address_raw = 0;
-						}
-					}
+	for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
+		if(is_store_ex == 0){
+			std::cout << "Is load coming here for execution?" << '\n';
+			if(big_mem[sel_ld_unit].status == 0){
+				std::cout << "Mem latency unit is busy" << '\n';
+				//std::cout << "Latency of mem: " <<  << '\n';
+				if(num_latency_mem[sel_ld_unit] > 1){
+					std::cout << "Latency of Mem Unit: " << num_latency_mem[sel_ld_unit] << '\n';
+					num_latency_mem[sel_ld_unit]--;
+					flag_mem[big_mem[sel_ld_unit].res_stat_num] = 0;
 				}
-			}
-			else{
-				for(unsigned a = 0; a < head_ROB; a++){
-					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
-					|| (opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
-							needs_ex_ld[i] = 0;
-							RES_Stat_Load[i].address_raw = a+1;
+				else{
+					switch (opcode_map[instruction_memory[RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].op_num].op_code]) {
+						case LW:
+						case LWS:
+							flag_mem[big_mem[sel_ld_unit].res_stat_num] = 1;
+							mem_result[big_mem[sel_ld_unit].res_stat_num] = char2unsigned(data_memory + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A);
+							break;
 						}
-						else{
-							needs_ex_ld[i] = 1;
-							RES_Stat_Load[i].address_raw = 0;
+						for(unsigned a = 0; a < create_exe_unit.size(); a++){
+							if(create_exe_unit[a].exe_unit == MEMORY){
+								hold_mem = a;
+							}
 						}
-					}
+
+						ld_ex_done[sel_ld_unit] = 1;
+						num_latency_mem[sel_ld_unit] = create_exe_unit[hold_mem].latency_exe;
+						big_mem[sel_ld_unit].status = 1;
+						ld_current_exe[big_mem[sel_ld_unit].res_stat_num] = 0;
 				}
 			}
 		}
 	}
 
 
+	/*
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(needs_ex_ld[i] == 1){
 			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
@@ -2226,6 +2253,7 @@ void sim_ooo::execute_ins(){
 		}
 	}
 */
+/*
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy == 1){
 			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
@@ -2297,6 +2325,7 @@ void sim_ooo::execute_ins(){
 			}
 		}
 	}
+*/
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy){
@@ -2322,7 +2351,7 @@ void sim_ooo::execute_ins(){
 				}
 		}
 	}
-
+/*
 	for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
 		std::cout << "Status of Mem when executing: " << big_mem[sel_ld_unit].status << '\n';
 		if(big_mem[sel_ld_unit].status == 0){
@@ -2362,7 +2391,7 @@ void sim_ooo::execute_ins(){
 						//	ROB_table[RES_Stat_Load[]] = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
 						}
 						break;*/
-				}
+/*				}
 				for(unsigned a = 0; a < create_exe_unit.size(); a++){
 					if(create_exe_unit[a].exe_unit == MEMORY){
 						hold_mem = a;
@@ -2374,6 +2403,7 @@ void sim_ooo::execute_ins(){
 			}
 		}
 	}
+	*/
 }
 
 void sim_ooo::write_res(){
