@@ -1983,6 +1983,128 @@ void sim_ooo::execute_ins(){
 	//unsigned ld_step1;
 	unsigned sw_check_head;
 
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(RES_Stat_Load[i].res_busy == 1){
+			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
+				case LW:
+				case LWS:
+					if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
+						for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
+							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+							||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+								if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
+									store_check = 1;
+									break;
+								}
+								else{
+									store_check = 0;
+								}
+							}
+							else{
+								store_check = 0;
+							}
+						}
+					}
+					else{
+						for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+							if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+							||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+								if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
+									store_check = 1;
+									break;
+								}
+								else{
+									store_check = 0;
+								}
+							}
+							else{
+								store_check = 0;
+							}
+						}
+						if(store_check == 0){
+							for(unsigned a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
+								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+									if(int_reg_stat[ROB_table[a].rob_dest].reg_busy != 1){
+										store_check = 1;
+										break;
+									}
+									else{
+										store_check = 0;
+									}
+								}
+								else{
+									store_check = 0;
+								}
+							}
+					}
+				}
+
+				if(Qj == 0 && store_check == 1){
+					RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+					ld_step1[i] = 1;
+				}
+				break;
+			}
+		}
+	}
+
+	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
+		if(ld_step1[i] == 1){
+			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > (head_ROB+1)){
+				for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
+					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+							needs_ex_ld[i] = 0;
+							RES_Stat_Load[i].address_raw = a+1;
+							break;
+						}
+						else{
+							needs_ex_ld[i] = 1;
+							RES_Stat_Load[i].address_raw = 0;
+						}
+					}
+				}
+			}
+			else{
+				for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+							needs_ex_ld[i] = 0;
+							RES_Stat_Load[i].address_raw = a+1;
+							break;
+						}
+						else{
+							RES_Stat_Load[i].address_raw = 0;
+							needs_ex_ld[i] = 1;
+						}
+					}
+				}
+				if(needs_ex_ld[i] == 1){
+					for(unsigned a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+						if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
+						||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
+							if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+								needs_ex_ld[i] = 0;
+								RES_Stat_Load[i].address_raw = a+1;
+								break;
+							}
+							else{
+								RES_Stat_Load[i].address_raw = 0;
+								needs_ex_ld[i] = 1;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	
+
+
 	/*for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(RES_Stat_Load[i].res_busy == 1){
 			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
