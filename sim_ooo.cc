@@ -112,7 +112,7 @@ std::vector<int> add_ex_done;
 std::vector<int> mul_ex_done;
 std::vector<int> div_ex_done;
 std::vector<int> ld_ex_done;
-
+std::vector<int> temp_res_add;
 std::vector<int> needs_ex_ld;
 std::vector<int> ld_step1;
 
@@ -233,6 +233,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
 		needs_ex_ld.push_back(UNDEFINED);
 		ld_step1.push_back(0);
 		ld_current_exe.push_back(0);
+		temp_res_add.push_back(UNDEFINED);
   }
 
   int_reg_stat.resize(NUM_GP_REGISTERS);
@@ -2053,7 +2054,7 @@ void sim_ooo::execute_ins(){
 
 					if(RES_Stat_Load[i].Qj == 0 && store_check == 1){
 						std::cout << "This condition was satisfied" << '\n';
-						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
+						temp_res_add[i] = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
 						ld_step1[i] = 1;
 						ld_current_exe[i] = 1;
 					}
@@ -2072,7 +2073,7 @@ void sim_ooo::execute_ins(){
 				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+						if(temp_res_add[i] == ROB_table[a].rob_dest){
 							needs_ex_ld[i] = 0;
 							RES_Stat_Load[i].address_raw = a+1;
 							break;
@@ -2092,7 +2093,7 @@ void sim_ooo::execute_ins(){
 				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-						if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+						if(temp_res_add[i] == ROB_table[a].rob_dest){
 							needs_ex_ld[i] = 0;
 							RES_Stat_Load[i].address_raw = a+1;
 							break;
@@ -2111,7 +2112,7 @@ void sim_ooo::execute_ins(){
 					for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
 						if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 						||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-							if(RES_Stat_Load[i].res_A == ROB_table[a].rob_dest){
+							if(temp_res_add[i] == ROB_table[a].rob_dest){
 								needs_ex_ld[i] = 0;
 								RES_Stat_Load[i].address_raw = a+1;
 								break;
@@ -2156,6 +2157,7 @@ void sim_ooo::execute_ins(){
 								RES_Stat_Load[i].use_ex = 1;
 								big_mem[sel_ld_unit].res_stat_num = i;
 								needs_ex_ld[i] = UNDEFINED;
+								RES_Stat_Load[i].res_A = temp_res_add[i];
 								break;
 							}
 						}
@@ -2170,6 +2172,7 @@ void sim_ooo::execute_ins(){
 			if(RES_Stat_Load[i].address_raw != 0){
 				mem_result[i] = RES_Stat_Load[i].from_forward;
 				ld_current_exe[i] = 0;
+				RES_Stat_Load[i].res_A = temp_res_add[i];
 			}
 		}
 	}
