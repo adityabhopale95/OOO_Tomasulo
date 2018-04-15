@@ -40,6 +40,7 @@ class sim_ooo{
 	float float_reg_file[NUM_FP_REGISTERS];
 	unsigned current_PC;
 	int head_ROB;
+	unsigned current_B;
 	unsigned current_R_int;
 	unsigned current_R_mul;
 	unsigned current_R_add;
@@ -102,6 +103,8 @@ public:
 	void clear_reg();
 
 	void clear_exe();
+
+	void clear_log();
 
 	void issue(unsigned temp_PC);
 

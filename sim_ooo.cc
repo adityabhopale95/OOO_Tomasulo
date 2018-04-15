@@ -22,6 +22,14 @@ struct every_line
 	exe_unit_t classify_exe;
 };
 
+struct execution_log{
+  unsigned log_pc;
+  unsigned log_issue;
+  unsigned log_execute;
+  unsigned log_write;
+  unsigned log_commit;
+};
+
 struct ROB_struc{
   unsigned entry;
   unsigned rob_busy;
@@ -92,9 +100,12 @@ ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEF
 RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTASSIGNED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,1};
 pack_of_exec execution_structure;
+execution_log temp_log = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED};
 std::vector<REGISTER_Stat> int_reg_stat;
 std::vector<REGISTER_Stat> float_reg_stat;
 
+std::vector<execution_log> pending_ins;
+std::vector<execution_log> final_log;
 std::vector<pack_of_exec> create_exe_unit;
 
 std::vector<every_line> instruction_memory;
@@ -203,9 +214,12 @@ sim_ooo::sim_ooo(unsigned mem_size,
     data_memory[j] = 0xFF;
   }
 
+
   ROB_table.push_back(ROB_tab);
+  pending_ins.push_back(temp_log);
   for(unsigned a = 1; a < rob_size; a++){           //initializing ROB
     ROB_tab.entry = a+1;
+    pending_ins.push_back(temp_log);
     ROB_table.push_back(ROB_tab);
   }
 
@@ -259,6 +273,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
 	is_cleared = 0;
 	is_store_ex = 0;
   is_load_ex = 0;
+  current_B = UNDEFINED;
 }
 
 sim_ooo::~sim_ooo(){
@@ -471,14 +486,14 @@ void sim_ooo::load_program(const char *filename, unsigned base_address){
 		every_instruct.op_code = "";
 		every_instruct.branch_array = "";
 	}
-	for (unsigned i = 0; i < instruction_memory.size(); i++){
+	/*for (unsigned i = 0; i < instruction_memory.size(); i++){
   	std::cout << "OP Code: " << instruction_memory[i].op_code << '\n';
   	std::cout << "Branch label: " << instruction_memory[i].branch_array << '\n';
   	std::cout << "Address: " << instruction_memory[i].instr_address << '\n';
   	std::cout << "MandOP: " << instruction_memory[i].mand_operand << '\n';
   	std::cout << "OP1: " << instruction_memory[i].remainder_operand1 << '\n';
   	std::cout << "OP2: " << instruction_memory[i].remainder_operand2 << '\n';
-  }
+  }*/
 	//std::cout << "Checking MAP value: " << dec << opcode_map["EOP"] << '\n';
 	base_add = base_address;
 	current_PC = base_add;
@@ -489,7 +504,6 @@ void sim_ooo::run(unsigned cycles){
 	if(cycles!=0){
 		while (cycles!=0) {
 			std::cout << "Cycle #" << dec << num_cycles << '\n';
-			num_cycles++;
 
 			commit_stage();
 
@@ -503,6 +517,8 @@ void sim_ooo::run(unsigned cycles){
 					issue(PC_index);
 					std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
 					if(issue_success == 1){
+            pending_ins[current_B].log_pc = current_PC;
+            pending_ins[current_B].log_issue = num_cycles;
 						current_PC = current_PC + 4;
 					}
 					else{
@@ -510,6 +526,8 @@ void sim_ooo::run(unsigned cycles){
 					}
 				}
 			}
+
+      num_cycles++;
       clear_flags();
 			cycles--;
 		}
@@ -521,7 +539,6 @@ void sim_ooo::run(unsigned cycles){
 			}
 			else{
 				std::cout << "Cycle #" << dec << num_cycles << '\n';
-				num_cycles++;
 				commit_stage();
 
 				write_res();
@@ -533,6 +550,8 @@ void sim_ooo::run(unsigned cycles){
 						PC_index = (current_PC - base_add)/4;
 						issue(PC_index);
 						if(issue_success == 1){
+              pending_ins[current_B].log_pc = current_PC;
+              pending_ins[current_B].log_issue = num_cycles;
 							current_PC = current_PC + 4;
 						}
 						else{
@@ -540,6 +559,7 @@ void sim_ooo::run(unsigned cycles){
 						}
 					}
 				}
+        num_cycles++;
         clear_flags();
 			}
 		}
@@ -585,8 +605,6 @@ void sim_ooo::issue(unsigned temp_PC){
 	unsigned imm;
 	unsigned h_val;
 	int fake_head;
-	unsigned current_B = UNDEFINED;
-
 
   /*for(unsigned i = 0; i < ld_ex_done.size(); i++){
     if(ld_ex_done[i]){
@@ -650,6 +668,7 @@ void sim_ooo::issue(unsigned temp_PC){
 
 	for(unsigned i = 0; i < ROB_table.size(); i++){
 		if(ROB_table[i].if_commit == 1){
+      std::cout << "Came here since if_commit was 1" << '\n';
 			ROB_table[i].if_commit = 0;
 			if(current_B == i){
 				current_B = UNDEFINED;
@@ -858,6 +877,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].rob_pc = temp_PC*4 + base_add;
 				ROB_table[current_B].rob_temp_pc = temp_PC;
 				ROB_table[current_B].state = ISSUE;
+
 				if(int_reg_stat[hold_val2].reg_busy){
 					h_val = int_reg_stat[hold_val2].ROB_num;
 					if(ROB_table[h_val].ready){
@@ -1711,6 +1731,7 @@ void sim_ooo::execute_ins(){
 									int_ex_done[sel_int_unit] = 0;
 									continue;
 								}
+                pending_ins[RES_Stat_Int[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Int[i].res_dest].state = EXECUTE;
 								RES_Stat_Int[i].use_ex = 1;
                 RES_Stat_Int[i].execution_unit_used = sel_int_unit;
@@ -1901,6 +1922,7 @@ void sim_ooo::execute_ins(){
 
 								std::cout << "Into Execute" << '\n';
                 RES_Stat_Add[i].execution_unit_used = sel_add_unit;
+                pending_ins[RES_Stat_Add[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Add[i].res_dest].state = EXECUTE;
 								RES_Stat_Add[i].use_ex = 1;
 								big_add[sel_add_unit].status = 0;
@@ -1979,6 +2001,7 @@ void sim_ooo::execute_ins(){
 								}
 
 								big_mul[sel_mul_unit].status = 0;
+                pending_ins[RES_Stat_Mul[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
 								RES_Stat_Mul[i].use_ex = 1;
 								big_mul[sel_mul_unit].res_stat_num = i;
@@ -1995,21 +2018,23 @@ void sim_ooo::execute_ins(){
 								std::cout << "Checking if div assignment possible" << '\n';
 								if(div_ex_done[sel_div_unit] == 1){
 									div_ex_done[sel_div_unit] = 0;
-									break;
+									continue;
 								}
 
 								std::cout << "No problems in assigning" << '\n';
 								big_div[sel_div_unit].status = 0;
+                pending_ins[RES_Stat_Mul[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
 								big_div[sel_div_unit].res_stat_num = i;
-								continue;
+                RES_Stat_Mul[i].execution_unit_used = sel_div_unit;
+                RES_Stat_Mul[i].use_ex = 1;
+               break;
 							}
-              RES_Stat_Mul[i].execution_unit_used = sel_div_unit;
-							big_div[sel_div_unit].status = 0;
+              /*big_div[sel_div_unit].status = 0;
 							ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
 							RES_Stat_Mul[i].use_ex = 1;
 							big_div[sel_div_unit].res_stat_num = i;
-							break;
+							break;*/
 						}
 						break;
 
@@ -2308,6 +2333,7 @@ void sim_ooo::execute_ins(){
 								}
                 std::cout << "Allocating execution unit for LOAD" << '\n';
 								big_mem[sel_ld_unit].status = 0;
+                pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 								RES_Stat_Load[i].use_ex = 1;
                 RES_Stat_Load[i].execution_unit_used = sel_ld_unit;
@@ -2337,6 +2363,7 @@ void sim_ooo::execute_ins(){
 				mem_result[i] = RES_Stat_Load[i].from_forward;
 				ld_current_exe[i] = 0;
 				ld_step1[i] = 0;
+        pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
 				ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 				flag_mem[i] = 1;
 				RES_Stat_Load[i].res_A = temp_res_add[i];
@@ -2524,6 +2551,7 @@ void sim_ooo::execute_ins(){
 							ROB_table[RES_Stat_Load[i].res_dest].rob_dest = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
 							RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
 							ROB_table[RES_Stat_Load[i].res_dest].dest_type = STORE_DEST;
+              pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
 							ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 							flag_mem[i] = 1;
               ROB_table[RES_Stat_Load[i].res_dest].is_available = 1;
@@ -2558,6 +2586,7 @@ void sim_ooo::execute_ins(){
             std::cout << "Destination address: " << hex << ROB_table[RES_Stat_Load[i].res_dest].rob_dest << '\n';
 						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
 						ROB_table[RES_Stat_Load[i].res_dest].dest_type = STORE_DEST;
+            pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
 						ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 						flag_mem[i] = 1;
             ROB_table[RES_Stat_Load[i].res_dest].is_available = 1;
@@ -2708,6 +2737,7 @@ void sim_ooo::write_res(){
 				ROB_table[RES_Stat_Int[i].res_dest].if_branch_rob = RES_Stat_Int[i].if_branch;
 				int_result[i] = UNDEFINED;
 				ROB_table[b_rob - 1].ready = 1;
+        pending_ins[RES_Stat_Int[i].res_dest].log_write = num_cycles;
 				ROB_table[b_rob - 1].state = WRITE_RESULT;
 				RES_Stat_Int[i].res_pc = UNDEFINED;
 				RES_Stat_Int[i].Vj = UNDEFINED;
@@ -2781,6 +2811,7 @@ void sim_ooo::write_res(){
 				add_result[i] = UNDEFINED;
 				add_ex_done[RES_Stat_Add[i].execution_unit_used] = 1;
 				ROB_table[b_rob-1].ready = 1;
+        pending_ins[RES_Stat_Add[i].res_dest].log_write = num_cycles;
 				ROB_table[b_rob-1].state = WRITE_RESULT;
 				RES_Stat_Add[i].res_busy = 0;
 				RES_Stat_Add[i].res_pc = UNDEFINED;
@@ -2867,6 +2898,7 @@ void sim_ooo::write_res(){
 				ROB_table[RES_Stat_Mul[i].res_dest].rob_val = mul_result[i];
 				mul_result[i] = UNDEFINED;
 				ROB_table[b_rob-1].ready = 1;
+        pending_ins[RES_Stat_Mul[i].res_dest].log_write = num_cycles;
 				ROB_table[b_rob-1].state = WRITE_RESULT;
 				RES_Stat_Mul[i].res_busy = 0;
 				RES_Stat_Mul[i].res_pc = UNDEFINED;
@@ -2966,6 +2998,7 @@ void sim_ooo::write_res(){
             ROB_table[RES_Stat_Load[i].res_dest].rob_val = mem_result[i];
 						mem_result[i] = UNDEFINED;
 						ROB_table[b_rob-1].ready = 1;
+            pending_ins[RES_Stat_Load[i].res_dest].log_write = num_cycles;
 						ROB_table[b_rob-1].state = WRITE_RESULT;
 						RES_Stat_Load[i].res_pc = UNDEFINED;
 						RES_Stat_Load[i].Vj = UNDEFINED;
@@ -3009,6 +3042,7 @@ void sim_ooo::write_res(){
 						ROB_table[b_rob - 1].rob_val = RES_Stat_Load[i].Vj;
             std::cout << "ROB_VAL in SW: " << ROB_table[b_rob - 1].rob_val << '\n';
 						ROB_table[b_rob - 1].ready = 1;
+            pending_ins[RES_Stat_Load[i].res_dest].log_write = num_cycles;
 						ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
 						RES_Stat_Load[i].res_busy = 0;
 						RES_Stat_Load[i].res_pc = UNDEFINED;
@@ -3054,6 +3088,9 @@ void sim_ooo::commit_stage(){
 				num_instructions++;
 				if(ROB_table[head_ROB].if_branch_rob == 1){
 					current_PC = ROB_table[head_ROB].rob_val;
+          ROB_table[head_ROB].state = COMMIT;
+          pending_ins[head_ROB].log_commit = num_cycles;
+          clear_log();
 					clear_rob();
 					clear_res();
 					clear_reg();
@@ -3079,6 +3116,7 @@ void sim_ooo::commit_stage(){
 							}
 							big_mem[sel_ld_unit].status = 0;
 							ROB_table[head_ROB].state = COMMIT;
+              pending_ins[head_ROB].log_commit = num_cycles;
 //							big_mem[sel_ld_unit].res_stat_num = ;
 							is_store_ex = 1;
 							num_instructions++;
@@ -3130,6 +3168,8 @@ void sim_ooo::commit_stage(){
 				std::cout << "The destination register: " << d << '\n';
 				std::cout << "The headROB: " << head_ROB << '\n';
 				register_file[d] = ROB_table[head_ROB].rob_val;
+        pending_ins[head_ROB].log_commit = num_cycles;
+        ROB_table[head_ROB].state = COMMIT;
 				break;
 
 			case ADDS:
@@ -3139,12 +3179,15 @@ void sim_ooo::commit_stage(){
 			case LWS:
 				num_instructions++;
 				float_reg_file[d] = unsigned2float(ROB_table[head_ROB].rob_val);
+        pending_ins[head_ROB].log_commit = num_cycles;
+        ROB_table[head_ROB].state = COMMIT;
 				break;
 
 			default:
 				break;
 		}
 		if(if_store_commit == 0){
+      final_log.push_back(pending_ins[head_ROB]);
 			ROB_table[head_ROB].rob_busy = false;
 			ROB_table[head_ROB].ready = false;
 			ROB_table[head_ROB].rob_pc = UNDEFINED;
@@ -3153,14 +3196,22 @@ void sim_ooo::commit_stage(){
 			ROB_table[head_ROB].dest_type = NOTASSIGNED;
 			ROB_table[head_ROB].if_commit = 1;
       ROB_table[head_ROB].is_available = 0;
+      pending_ins[head_ROB].log_pc = UNDEFINED;
+      pending_ins[head_ROB].log_issue = UNDEFINED;
+      pending_ins[head_ROB].log_execute = UNDEFINED;
+      pending_ins[head_ROB].log_write = UNDEFINED;
+      pending_ins[head_ROB].log_commit = UNDEFINED;
+
 			if(type_res == INTEGER_RES){
 				if(int_reg_stat[d].ROB_num == head_ROB){
 					int_reg_stat[d].reg_busy = 0;
+          int_reg_stat[d].ROB_num = UNDEFINED;
 				}
 			}
 			if(type_res == FLOAT_RES){
 				if(float_reg_stat[d].ROB_num == head_ROB){
 					float_reg_stat[d].reg_busy = 0;
+          float_reg_stat[d].ROB_num = UNDEFINED;
 				}
 			}
 			std::cout << "Check_END: " << check_end << '\n';
@@ -3174,11 +3225,13 @@ void sim_ooo::commit_stage(){
 				head_ROB = 0;
 			}
 		}
+    //std::cout << "Value of if_commit: " << ROB_table[head_ROB].if_commit << '\n';
 		if(if_branch == 1){
 			std::cout << "True here as well" << '\n';
 			check_end = 0;
 			is_cleared = 1;
 			head_ROB = 0;
+      ROB_table[head_ROB].if_commit = 0;
 		}
 	}
 	if(check_end == 1){
@@ -3204,6 +3257,23 @@ void sim_ooo::commit_stage(){
 	std::cout << "Head of ROB: " << head_ROB << '\n';
 }
 //reset the state of the sim_oooulator
+
+void sim_ooo::clear_log(){
+  for(unsigned i = (head_ROB); i < ROB_table.size(); i++){
+    if(pending_ins[i].log_pc != UNDEFINED){
+      final_log.push_back(pending_ins[i]);
+    }
+  }
+  for(unsigned i = 0; i < head_ROB; i++){
+    if(pending_ins[i].log_pc != UNDEFINED){
+      final_log.push_back(pending_ins[i]);
+    }
+  }
+
+  for(unsigned a = 0; a < pending_ins.size(); a++){
+    pending_ins[a] = temp_log;
+  }
+}
 
 void sim_ooo::clear_rob(){
 	for(unsigned a = 0; a < ROB_table.size(); a++){           //initializing ROB
@@ -3335,11 +3405,11 @@ void sim_ooo::set_fp_register(unsigned reg, float value){
 }
 
 unsigned sim_ooo::get_pending_int_register(unsigned reg){
-	return UNDEFINED; //fill here
+	return int_reg_stat[reg].ROB_num; //fill here
 }
 
 unsigned sim_ooo::get_pending_fp_register(unsigned reg){
-	return UNDEFINED; //fill here
+	return float_reg_stat[reg].ROB_num; //fill here
 }
 
 void sim_ooo::print_status(){
@@ -3518,11 +3588,36 @@ void sim_ooo::print_reservation_stations(){
 void sim_ooo::print_pending_instructions(){
 	cout << "PENDING INSTRUCTIONS STATUS" << endl;
 	cout << setfill(' ');
-	cout << setw(10) << "PC" << setw(7) << "Issue" << setw(7) << "Exe" << setw(7) << "WR" << setw(7) << "Commit";
+	cout << setw(10) << "PC" << setw(7) << "Issue" << setw(7) << "Exe" << setw(7) << "WR" << setw(7) << "Commit" << '\n';
+  for(unsigned i = 0; i < pending_ins.size(); i++){
+    if(pending_ins[i].log_pc != UNDEFINED){
+      std::cout << hex << "0x" << setw(8) << setfill('0') << pending_ins[i].log_pc << setfill(' ');
+      if(pending_ins[i].log_issue!=UNDEFINED) std::cout << dec << setw(7) << pending_ins[i].log_issue; else std::cout << setw(7) << "-";
+      if(pending_ins[i].log_execute!=UNDEFINED) std::cout << dec << setw(7) << pending_ins[i].log_execute; else std::cout << setw(7) << "-";
+      if(pending_ins[i].log_write!=UNDEFINED) std::cout << dec << setw(7) << pending_ins[i].log_write; else std::cout << setw(7) << "-";
+      if(pending_ins[i].log_commit!=UNDEFINED) std::cout << dec << setw(7) << pending_ins[i].log_commit << '\n'; else std::cout << setw(7) << "-" << '\n';
+    }
+    else{
+      std::cout << setw(10) << "-" << setw(7) << "-" << setw(7) << "-" << setw(7) << "-" << setw(7) << "-" << '\n';
+    }
+  }
+
 	cout << endl;
 }
 
 void sim_ooo::print_log(){
+  std::cout << "EXECUTION LOG" << '\n';
+  cout << setfill(' ');
+  cout << setw(10) << "PC" << setw(7) << "Issue" << setw(7) << "Exe" << setw(7) << "WR" << setw(7) << "Commit" << '\n';
+  for(unsigned i = 0; i < final_log.size(); i++){
+    if(final_log[i].log_pc != UNDEFINED){
+      std::cout << hex << "0x" << setw(8) << setfill('0') << final_log[i].log_pc << setfill(' ');
+      if(final_log[i].log_issue!=UNDEFINED) std::cout << dec << setw(7) << final_log[i].log_issue; else std::cout << setw(7) << "-";
+      if(final_log[i].log_execute!=UNDEFINED) std::cout << dec << setw(7) << final_log[i].log_execute; else std::cout << setw(7) << "-";
+      if(final_log[i].log_write!=UNDEFINED) std::cout << dec << setw(7) << final_log[i].log_write; else std::cout << setw(7) << "-";
+      if(final_log[i].log_commit!=UNDEFINED) std::cout << dec << setw(7) << final_log[i].log_commit << '\n'; else std::cout << setw(7) << "-" << '\n';
+    }
+  }
 }
 
 float sim_ooo::get_IPC(){
