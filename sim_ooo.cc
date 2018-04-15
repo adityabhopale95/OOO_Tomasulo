@@ -36,6 +36,7 @@ struct ROB_struc{
 	unsigned if_commit;
 	unsigned add_reg;
 	unsigned str_add;
+  unsigned is_available;
 };
 
 struct RES_Stat_struc{
@@ -87,7 +88,7 @@ std::map<string, int> opcode_map;
 
 every_line every_instruct;
 
-ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEFINED,NOTASSIGNED,0,UNDEFINED,UNDEFINED};
+ROB_struc ROB_tab = {1,0,0,UNDEFINED,UNDEFINED,UNDEFINED,INVALID,UNDEFINED,UNDEFINED,NOTASSIGNED,0,UNDEFINED,UNDEFINED,0};
 RES_Stat_struc RES_Temp = {"",0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,0,0,0,0,0,UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,NOTASSIGNED,NOTVALID};
 exe_struc TempReg = {UNDEFINED,UNDEFINED,UNDEFINED,UNDEFINED,1};
 pack_of_exec execution_structure;
@@ -118,6 +119,7 @@ std::vector<int> ld_ex_done;
 std::vector<int> temp_res_add;
 std::vector<int> needs_ex_ld;
 std::vector<int> ld_step1;
+std::vector<int> ld_step2;
 
 std::vector<int> ld_current_exe;
 
@@ -235,6 +237,7 @@ sim_ooo::sim_ooo(unsigned mem_size,
 		flag_mem.push_back(0);
 		needs_ex_ld.push_back(UNDEFINED);
 		ld_step1.push_back(0);
+    ld_step2.push_back(0);
 		ld_current_exe.push_back(0);
 		temp_res_add.push_back(UNDEFINED);
   }
@@ -1651,7 +1654,7 @@ void sim_ooo::issue(unsigned temp_PC){
 					}
 				}
 				else{
-					RES_Stat_Load[current_R_ld].Vj = float_reg_file[hold_val2];
+					RES_Stat_Load[current_R_ld].Vj = float2unsigned(float(float_reg_file[hold_val2]));
 					RES_Stat_Load[current_R_ld].Qj = 0;
 					RES_Stat_Load[current_R_ld].if_depend_Vj = 0;
 				}
@@ -2090,20 +2093,21 @@ void sim_ooo::execute_ins(){
 						std::cout << "Calculating PC: " << RES_Stat_Load[i].res_pc << '\n';
 						if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) >= (head_ROB)){
 							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
-								//std::cout << "Value of a in this condition: " << a << '\n';
+								std::cout << "Value of a in this condition: " << a << '\n';
 								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 									//std::cout << "There is a store" << '\n';
 									if(int_reg_stat[ROB_table[a].add_reg].reg_busy != 1){
 										store_check = 1;
 										std::cout << "Store detected and it does not have indeterminate address" << '\n';
-										break;
+										//break;
 									}
 									else{
 										std::cout << "Busy stores present in Load Step 1" << '\n';
 										store_check = 0;
+                    break;
 									}
-                  break;
+                  //break;
 								}
 								else{
 									std::cout << "No stores in Load Step 1" << '\n';
@@ -2113,27 +2117,28 @@ void sim_ooo::execute_ins(){
 						}
 						else{
 							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
-								//std::cout << "Value of a: " << a << '\n';
+								std::cout << "Value of a: " << a << '\n';
 								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 									//std::cout << "There is a store" << '\n';
 									if(int_reg_stat[ROB_table[a].add_reg].reg_busy != 1){
 										std::cout << "Store detected and it does not have indeterminate address" << '\n';
 										store_check = 1;
-										break;
+										//break;
 									}
 									else{
 										std::cout << "Busy stores detected in Load Step 1" << '\n';
 										store_check = 0;
+                    break;
 									}
-									break;
+									//break;
 								}
 								else{
 									std::cout << "No stores in Load Step 1" << '\n';
 									store_check = 1;
 								}
 							}
-							if(store_check == 0){
+							//if(store_check == 0){
 								for(int a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
 									if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 									||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
@@ -2153,7 +2158,7 @@ void sim_ooo::execute_ins(){
 										store_check = 1;
 									}
 								}
-						}
+						//}
 					}
 
 					if(RES_Stat_Load[i].Qj == 0 && store_check == 1){
@@ -2170,7 +2175,7 @@ void sim_ooo::execute_ins(){
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(ld_step1[i] == 1){
+		if(ld_step1[i] == 1 && ld_step2[i] == 0){
 			std::cout << "first step of load was satisfied" << '\n';
 			std::cout << "Value of i: " << i << '\n';
 			std::cout << "Value of entry: " << RES_Stat_Load[i].res_dest << '\n';
@@ -2183,12 +2188,24 @@ void sim_ooo::execute_ins(){
 						std::cout << "The address at store ROB table: " << ROB_table[a].str_add << '\n';
 						std::cout << "The address for load: " << temp_res_add[i] << '\n';
 						if(temp_res_add[i] == ROB_table[a].str_add){
+
 							needs_ex_ld[i] = 0;
-							RES_Stat_Load[i].address_raw = a+1;
-							std::cout << "There is an address raw" << '\n';
+              if(ROB_table[a].is_available){
+                RES_Stat_Load[i].from_forward = ROB_table[a].rob_val;
+                RES_Stat_Load[i].address_raw = 0;
+                if(ld_current_exe[i] == 1){
+        					ld_current_exe[i] = 0;
+        					continue;
+        				}
+              }
+              else{
+							  RES_Stat_Load[i].address_raw = a+1;
+              }
+              std::cout << "There is an address raw" << '\n';
 							break;
 						}
 						else{
+              std::cout << "No address raw" << '\n';
 							needs_ex_ld[i] = 1;
 							RES_Stat_Load[i].address_raw = 0;
 						}
@@ -2208,26 +2225,51 @@ void sim_ooo::execute_ins(){
 						std::cout << "The address for load: " << temp_res_add[i] << '\n';
 						if(temp_res_add[i] == ROB_table[a].str_add){
 							needs_ex_ld[i] = 0;
-							RES_Stat_Load[i].address_raw = a+1;
+              if(ROB_table[a].is_available){
+                RES_Stat_Load[i].from_forward = ROB_table[a].rob_val;
+                RES_Stat_Load[i].address_raw = 0;
+                if(ld_current_exe[i] == 1){
+        					ld_current_exe[i] = 0;
+        					continue;
+        				}
+              }
+              else{
+							  RES_Stat_Load[i].address_raw = a+1;
+              }
+              std::cout << "Address RAW present" << '\n';
 							break;
 						}
 						else{
 							RES_Stat_Load[i].address_raw = 0;
 							needs_ex_ld[i] = 1;
+              std::cout << "No address raw" << '\n';
 						}
 					}
 					else{
 						needs_ex_ld[i] = 1;
 						RES_Stat_Load[i].address_raw = 0;
+            std::cout << "No store detected. Allocating memory functional unit" << '\n';
 					}
 				}
-				if(needs_ex_ld[i] == 1){
-					for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
+				//if(needs_ex_ld[i] == 1){
+					for(int a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
 						if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 						||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 							if(temp_res_add[i] == ROB_table[a].str_add){
 								needs_ex_ld[i] = 0;
-								RES_Stat_Load[i].address_raw = a+1;
+                std::cout << "Value of entry of ROB: " << a << '\n';
+                std::cout << "Availibity of address: " << ROB_table[a].is_available << '\n';
+                if(ROB_table[a].is_available){
+                  RES_Stat_Load[i].from_forward = ROB_table[a].rob_val;
+                  RES_Stat_Load[i].address_raw = 0;
+                  if(ld_current_exe[i] == 1){
+          					ld_current_exe[i] = 0;
+          				}
+                }
+                else{
+  							  RES_Stat_Load[i].address_raw = a+1;
+                }
+                std::cout << "Checking again" << '\n';
 								break;
 							}
 							else{
@@ -2236,8 +2278,9 @@ void sim_ooo::execute_ins(){
 							}
 						}
 					}
-				}
+				//}
 			}
+      ld_step2[i] = 1;
 		}
 	}
 
@@ -2283,7 +2326,7 @@ void sim_ooo::execute_ins(){
 		else if(needs_ex_ld[i] == 0){
 			std::cout << "Mem execution unit not required and waiting for store to bypass" << '\n';
 			std::cout << "Dependency at: " << i << '\n';
-
+      std::cout << "The value of address_raw flag: " << RES_Stat_Load[i].address_raw <<'\n';
 			if(RES_Stat_Load[i].address_raw == 0){
 				std::cout << "Came to take the bypassed value" << '\n';
 				if(ld_current_exe[i] == 1){
@@ -2298,6 +2341,7 @@ void sim_ooo::execute_ins(){
 				flag_mem[i] = 1;
 				RES_Stat_Load[i].res_A = temp_res_add[i];
 				needs_ex_ld[i] = UNDEFINED;
+        ld_step2[i] = 0;
 			}
 		}
 	}
@@ -2334,6 +2378,7 @@ void sim_ooo::execute_ins(){
 						ld_step1[big_mem[sel_ld_unit].res_stat_num] = 0;
 						needs_ex_ld[big_mem[sel_ld_unit].res_stat_num] = UNDEFINED;
             //is_load_ex = 0;
+            ld_step2[big_mem[sel_ld_unit].res_stat_num] = 0;
 				}
 			}
 		}
@@ -2481,6 +2526,7 @@ void sim_ooo::execute_ins(){
 							ROB_table[RES_Stat_Load[i].res_dest].dest_type = STORE_DEST;
 							ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 							flag_mem[i] = 1;
+              ROB_table[RES_Stat_Load[i].res_dest].is_available = 1;
 						}
 					break;
 
@@ -2514,6 +2560,7 @@ void sim_ooo::execute_ins(){
 						ROB_table[RES_Stat_Load[i].res_dest].dest_type = STORE_DEST;
 						ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
 						flag_mem[i] = 1;
+            ROB_table[RES_Stat_Load[i].res_dest].is_available = 1;
 					}
 			break;
 			}
@@ -2649,6 +2696,8 @@ void sim_ooo::write_res(){
 				}
 				if(RES_Stat_Load[j].Qk == b_rob){
 					RES_Stat_Load[j].Vk = int_result[i];
+          ROB_table[RES_Stat_Load[j].res_dest].is_available = 1;
+          ROB_table[RES_Stat_Load[j].res_dest].str_add = RES_Stat_Load[j].Vk + RES_Stat_Load[j].res_A;
 					RES_Stat_Load[j].Qk = 0;
 				}
 			}
@@ -2709,7 +2758,7 @@ void sim_ooo::write_res(){
 				}
 				if(RES_Stat_Mul[j].Qk == b_rob){
 					RES_Stat_Mul[j].Vk = add_result[i];
-					RES_Stat_Mul[j].Qk = 0;
+          RES_Stat_Mul[j].Qk = 0;
 				}
 			}
 
@@ -2721,8 +2770,10 @@ void sim_ooo::write_res(){
 				}
 				if(RES_Stat_Load[j].Qk == b_rob){
 					std::cout << "Gave the value to load store unit for Qk" << '\n';
-					RES_Stat_Load[j].Vk = mem_result[i];
-					RES_Stat_Load[j].Qk = 0;
+					RES_Stat_Load[j].Vk = add_result[i];
+          ROB_table[RES_Stat_Load[j].res_dest].str_add = RES_Stat_Load[j].Vk + RES_Stat_Load[j].res_A;
+          ROB_table[RES_Stat_Load[j].res_dest].is_available = 1;
+          RES_Stat_Load[j].Qk = 0;
 				}
 			}
 			  std::cout << "Value of ROB:" << RES_Stat_Add[i].res_dest << '\n';
@@ -2796,8 +2847,10 @@ void sim_ooo::write_res(){
 					RES_Stat_Load[j].Qj = 0;
 				}
 				if(RES_Stat_Load[j].Qk == b_rob){
-					RES_Stat_Load[j].Vk = mem_result[i];
-					RES_Stat_Load[j].Qk = 0;
+					RES_Stat_Load[j].Vk = mul_result[i];
+          ROB_table[RES_Stat_Load[j].res_dest].str_add = RES_Stat_Load[j].Vk + RES_Stat_Load[j].res_A;
+          ROB_table[RES_Stat_Load[j].res_dest].is_available = 1;
+          RES_Stat_Load[j].Qk = 0;
 				}
 			}
         switch (opcode_map[instruction_memory[RES_Stat_Mul[i].op_num].op_code]) {
@@ -2897,12 +2950,16 @@ void sim_ooo::write_res(){
 						}
 						if(RES_Stat_Load[j].Qk == b_rob){
 							RES_Stat_Load[j].Vk = mem_result[i];
+              ROB_table[RES_Stat_Load[j].res_dest].str_add = RES_Stat_Load[j].Vk + RES_Stat_Load[j].res_A;
+              ROB_table[RES_Stat_Load[j].res_dest].is_available = 1;
 							RES_Stat_Load[j].Qk = 0;
 						}
 					}
 						std::cout << "Value of i: " << i << '\n';
 						std::cout << "Also came here" << '\n';
-            ld_ex_done[RES_Stat_Load[i].execution_unit_used] = 1;
+            if(RES_Stat_Load[i].execution_unit_used!=UNDEFINED){
+              ld_ex_done[RES_Stat_Load[i].execution_unit_used] = 1;
+            }
             if(is_load_ex == 1){
               is_load_ex = 0;
             }
@@ -2948,8 +3005,9 @@ void sim_ooo::write_res(){
               }
             }
 
-
+            std::cout << "Value of Vj in store: " << RES_Stat_Load[i].Vj << '\n';
 						ROB_table[b_rob - 1].rob_val = RES_Stat_Load[i].Vj;
+            std::cout << "ROB_VAL in SW: " << ROB_table[b_rob - 1].rob_val << '\n';
 						ROB_table[b_rob - 1].ready = 1;
 						ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
 						RES_Stat_Load[i].res_busy = 0;
@@ -3094,6 +3152,7 @@ void sim_ooo::commit_stage(){
 			ROB_table[head_ROB].rob_dest = UNDEFINED;
 			ROB_table[head_ROB].dest_type = NOTASSIGNED;
 			ROB_table[head_ROB].if_commit = 1;
+      ROB_table[head_ROB].is_available = 0;
 			if(type_res == INTEGER_RES){
 				if(int_reg_stat[d].ROB_num == head_ROB){
 					int_reg_stat[d].reg_busy = 0;
