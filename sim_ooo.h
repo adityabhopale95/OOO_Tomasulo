@@ -23,7 +23,7 @@ typedef enum {INTEGER, ADDER, MULTIPLIER, DIVIDER, MEMORY, NOTVALID} exe_unit_t;
 
 typedef enum{ISSUE, EXECUTE, WRITE_RESULT, COMMIT, INVALID} stage_t;
 
-typedef enum{INTEGER_RES,FLOAT_RES,NOTASSIGNED} res_type_t;
+typedef enum{INTEGER_RES,FLOAT_RES,STORE_DEST,NOTASSIGNED} res_type_t;
 
 
 class sim_ooo{
@@ -44,7 +44,6 @@ class sim_ooo{
 	unsigned current_R_mul;
 	unsigned current_R_add;
 	unsigned current_R_ld;
-	unsigned current_B;
 	unsigned check_branch;
 	unsigned branch_cond;
 	unsigned int_struc_hazard;
@@ -61,6 +60,7 @@ class sim_ooo{
 	unsigned num_instructions;
 	unsigned is_cleared;
 	unsigned is_store_ex;
+	unsigned is_load_ex;
 public:
 
 	/* Instantiates the simulator
@@ -92,6 +92,8 @@ public:
 	void run(unsigned cycles=0);
 
 	//Issue stage of the Tomasulo's algorithm
+
+	void clear_flags();
 
 	void clear_rob();
 

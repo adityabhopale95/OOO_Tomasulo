@@ -5,7 +5,7 @@
 
 using namespace std;
 
-/* Test case for pipelined simuator */ 
+/* Test case for pipelined simuator */
 /* DO NOT MODIFY */
 
 /* convert a float into an unsigned */
@@ -27,7 +27,7 @@ int main(int argc, char **argv){
 	unsigned i;
 
 	// instantiates sim_ooo with a 1MB data memory
-	sim_ooo *ooo = new sim_ooo(1024*1024, 
+	sim_ooo *ooo = new sim_ooo(1024*1024,
 				   6,
 				   1, 2, 2, 2);
 
@@ -50,15 +50,15 @@ int main(int argc, char **argv){
 	//initialize data memory and prints its content (for the specified address ranges)
 	ooo->write_memory(0x14,float2unsigned(10.0));
 	ooo->write_memory(0x28,float2unsigned(30.0));
-	
+
 	cout << "\nBEFORE PROGRAM EXECUTION..." << endl;
 	cout << "======================================================================" << endl << endl;
-	
+
 	//prints the value of the memory and registers
 	ooo->print_registers();
 	ooo->print_memory(0x0, 0x30);
 
-	// executes the program	
+	// executes the program
 	cout << "\n*****************************" << endl;
 	cout << "STARTING THE PROGRAM..." << endl;
 	cout << "*****************************" << endl << endl;
@@ -67,7 +67,7 @@ int main(int argc, char **argv){
 	cout << "First 20 clock cycles: inspecting the registers at each clock cycle..." << endl;
 	cout << "======================================================================" << endl << endl;
 
-	for (i=0; i<20; i++){
+	for (i=0; i<25; i++){
 		cout << "CLOCK CYCLE #" << dec << i << endl;
 		ooo->run(1);
 		ooo->print_status();
@@ -76,7 +76,7 @@ int main(int argc, char **argv){
 
 	// runs program to completion
 	cout << "EXECUTING PROGRAM TO COMPLETION..." << endl << endl;
-	ooo->run(); 
+	ooo->run();
 
 	cout << "PROGRAM TERMINATED\n";
 	cout << "===================" << endl << endl;
@@ -88,7 +88,7 @@ int main(int argc, char **argv){
 
 	//print the execution log
 	ooo->print_log();
-	
+
 	cout << endl;
 
 	// prints the number of instructions executed and IPC

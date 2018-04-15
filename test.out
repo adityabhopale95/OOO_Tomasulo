@@ -1,0 +1,2089 @@
+OP Code: LWS
+Branch label: 
+Address: 0
+MandOP: F0
+OP1: 10(R1)
+OP2: 
+OP Code: LWS
+Branch label: 
+Address: 4
+MandOP: F2
+OP1: 20(R2)
+OP2: 
+OP Code: ADDS
+Branch label: 
+Address: 8
+MandOP: F3
+OP1: F0
+OP2: F2
+OP Code: MULTS
+Branch label: 
+Address: 12
+MandOP: F4
+OP1: F0
+OP2: F5
+OP Code: BEQZ
+Branch label: 
+Address: 16
+MandOP: R3
+OP1: TARGET
+OP2: 
+OP Code: SUBS
+Branch label: 
+Address: 20
+MandOP: F2
+OP1: F5
+OP2: F4
+OP Code: DIVS
+Branch label: 
+Address: 24
+MandOP: F6
+OP1: F10
+OP2: F0
+OP Code: ADDS
+Branch label: 
+Address: 28
+MandOP: F5
+OP1: F7
+OP2: F8
+OP Code: ADDS
+Branch label: TARGET
+Address: 32
+MandOP: F4
+OP1: F2
+OP2: F3
+OP Code: SUBS
+Branch label: 
+Address: 36
+MandOP: F2
+OP1: F5
+OP2: F4
+OP Code: EOP
+Branch label: 
+Address: 40
+MandOP: 
+OP1: 
+OP2: 
+
+BEFORE PROGRAM EXECUTION...
+======================================================================
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0          0/0x00000000    -
+      F1         10/0x41200000    -
+      F2         20/0x41a00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+DATA MEMORY[0x00000000:0x00000030]
+0x00000000: ff ff ff ff 
+0x00000004: ff ff ff ff 
+0x00000008: ff ff ff ff 
+0x0000000c: ff ff ff ff 
+0x00000010: ff ff ff ff 
+0x00000014: 00 00 20 41 
+0x00000018: ff ff ff ff 
+0x0000001c: ff ff ff ff 
+0x00000020: ff ff ff ff 
+0x00000024: ff ff ff ff 
+0x00000028: 00 00 f0 41 
+0x0000002c: ff ff ff ff 
+
+*****************************
+STARTING THE PROGRAM...
+*****************************
+
+First 20 clock cycles: inspecting the registers at each clock cycle...
+======================================================================
+
+CLOCK CYCLE #0
+Cycle #0
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 0
+Assigning ROB: 0
+ROB_Available: 1 at position: 0
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:LWS
+TEMP_PC: 0
+hold_val_imm1: 10
+Reservation station opcode number: 0
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000000     ISSUE    F0           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000000  0x0000000a           -     -     -     0  0x0000000a
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0          0/0x00000000    -
+      F1         10/0x41200000    -
+      F2         20/0x41a00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #1
+Cycle #1
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Value of a in this condition: 0
+No stores here
+This condition was satisfied
+Then I got here since first step of load was satisfied
+Value of i: 0
+Value of entry: 0
+Ikde aala re baba
+Is load coming here for execution?
+Mem latency unit is busy
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 1
+ROB_Available: 1 at position: 1
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:LWS
+TEMP_PC: 1
+hold_val_imm1: 20
+Reservation station opcode number: 1
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000000       EXE    F0           -
+    2   yes     no  0x00000004     ISSUE    F2           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000000  0x0000000a           -     -     -     0  0x00000014
+  Load2   yes  0x00000004  0x00000014           -     -     -     1  0x00000014
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0          0/0x00000000    -
+      F1         10/0x41200000    -
+      F2         20/0x41a00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #2
+Cycle #2
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 1
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 1
+In Load of write result
+OP NUM: 0
+Value of B: 1
+In here I'm present
+In here I'm present
+Value of i: 0
+Also came here
+Flag_MEM: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Value of a in this condition: 1
+No stores here
+Value of a in this condition: 0
+No stores here
+This condition was satisfied
+Then I got here since first step of load was satisfied
+Value of i: 1
+Value of entry: 1
+Ikde aala re baba
+Is load coming here for execution?
+Mem latency unit is busy
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 0
+OPCODE in ISSUE:ADDS
+TEMP_PC: 2
+The register was busy
+The register is dependent on ROB: 1
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes    yes  0x00000000        WR    F0    41200000
+    2   yes     no  0x00000004       EXE    F2           -
+    3   yes     no  0x00000008     ISSUE    F3           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000004  0x00000014           -     -     -     1  0x00000028
+   Add1   yes  0x00000008  0x41200000           -     -     1     2           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0          0/0x00000000    -
+      F1         10/0x41200000    -
+      F2         20/0x41a00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #3
+Cycle #3
+**********COMMIT************
+PC of head: 0
+Check_END: 0
+Incrementing ROB head:1
+Size of ROB: 6
+Head of ROB: 1
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 1
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 1
+In Load of write result
+OP NUM: 1
+Value of B: 2
+In here I'm present
+Loading in Vk
+In here I'm present
+Value of i: 1
+Also came here
+Flag_MEM: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Waited for one clock cycle
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 3
+ROB_Available: 1 at position: 3
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:MULTS
+TEMP_PC: 3
+Came here in MULTS
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2   yes    yes  0x00000004        WR    F2    41f00000
+    3   yes     no  0x00000008     ISSUE    F3           -
+    4   yes     no  0x0000000c     ISSUE    F4           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000008  0x41200000  0x41f00000     -     -     2           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         20/0x41a00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #4
+Cycle #4
+**********COMMIT************
+PC of head: 4
+Check_END: 0
+Incrementing ROB head:2
+Size of ROB: 6
+Head of ROB: 2
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 1
+Into Execute
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Latency of add unit: 2
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 2
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 4
+ROB_Available: 1 at position: 4
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:BEQZ
+TEMP_PC: 4
+RES_YES_INT: 1
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3   yes     no  0x00000008       EXE    F3           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes     no  0x00000010     ISSUE     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000010  0x00000000           -     -     -     4           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000008  0x41200000  0x41f00000     -     -     2           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #5
+Cycle #5
+**********COMMIT************
+Head of ROB: 2
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Latency of Int: 2
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 0
+Sel_Add_Unit: 1
+Status: 1
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Executing the adder unit
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 2
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 5
+ROB_Available: 1 at position: 5
+RESERVATION STATION Available for INT: 0
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 5
+The register was busy
+The register is dependent on ROB: 3
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3   yes     no  0x00000008       EXE    F3           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes     no  0x00000010       EXE     -           -
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000010  0x00000000           -     -     -     4           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000008  0x41200000  0x41f00000     -     -     2           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #6
+Cycle #6
+**********COMMIT************
+Head of ROB: 2
+****************WRITE RESULT******************
+Value of ROB:2
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 2
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 0
+RESERVATION STATION Available for INT: 0
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:DIVS
+TEMP_PC: 6
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018     ISSUE    F6           -
+    2    no     no           -         -     -           -
+    3   yes    yes  0x00000008        WR    F3    42200000
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes     no  0x00000010       EXE     -           -
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000010  0x00000000           -     -     -     4           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         30/0x41f00000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #7
+Cycle #7
+**********COMMIT************
+PC of head: 8
+Check_END: 0
+Incrementing ROB head:3
+Size of ROB: 6
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Checking if div assignment possible
+No problems in assigning
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 1
+RESERVATION STATION Available for INT: 0
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 7
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes     no  0x0000001c     ISSUE    F5           -
+    3    no     no           -         -     -           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x0000001c  0x428c0000  0x42a00000     -     -     1           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #8
+Cycle #8
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 1
+Into Execute
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Latency of add unit: 2
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes     no  0x0000001c       EXE    F5           -
+    3    no     no           -         -     -           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x0000001c  0x428c0000  0x42a00000     -     -     1           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #9
+Cycle #9
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 0
+Sel_Add_Unit: 1
+Status: 1
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Executing the adder unit
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes     no  0x0000001c       EXE    F5           -
+    3    no     no           -         -     -           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x0000001c  0x428c0000  0x42a00000     -     -     1           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #10
+Cycle #10
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of ROB:1
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3    no     no           -         -     -           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #11
+Cycle #11
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3   yes     no  0x00000020     ISSUE    F4           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020           -  0x42200000     5     -     2           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #12
+Cycle #12
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 0 at position: 4294967295
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 9
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3   yes     no  0x00000020     ISSUE    F4           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020           -  0x42200000     5     -     2           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #13
+Cycle #13
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??2
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+In for execution in multiplier
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 0 at position: 4294967295
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 9
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3   yes     no  0x00000020     ISSUE    F4           -
+    4   yes     no  0x0000000c       EXE    F4           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020           -  0x42200000     5     -     2           -
+   Add2   yes  0x00000014  0x42480000           -     -     3     5           -
+  Mult1   yes  0x0000000c  0x41200000  0x42480000     -     -     3           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #14
+Cycle #14
+**********COMMIT************
+Head of ROB: 3
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i in Mul whose result is ready: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Waited for one clock cycle
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 3
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_Available: 0 at position: 4294967295
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 0
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 9
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3   yes     no  0x00000020     ISSUE    F4           -
+    4   yes    yes  0x0000000c        WR    F4    43fa0000
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014     ISSUE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020           -  0x42200000     5     -     2           -
+   Add2   yes  0x00000014  0x42480000  0x43fa0000     -     -     5           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4         40/0x42200000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #15
+Cycle #15
+**********COMMIT************
+PC of head: c
+Check_END: 0
+Incrementing ROB head:4
+Size of ROB: 6
+Head of ROB: 4
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Sel_Add_Unit: 0
+Status: 1
+Into Execute
+Execution loop of add: 0
+Status of adder unit: 0
+Latency of add unit: 2
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Found this busy
+No dependencies whatsoever
+Divider or Mult??3
+In Div iterator
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 4
+ROB_BUSY: 1
+ROB_BUSY: 1
+Waited for one cycle
+ROB_Available: 0 at position: 3
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 9
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000018       EXE    F6           -
+    2   yes    yes  0x0000001c        WR    F5    43160000
+    3   yes     no  0x00000020     ISSUE    F4           -
+    4    no     no           -         -     -           -
+    5   yes    yes  0x00000010        WR     -          20
+    6   yes     no  0x00000014       EXE    F2           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020           -  0x42200000     5     -     2           -
+   Add2   yes  0x00000014  0x42480000  0x43fa0000     -     -     5           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2   yes  0x00000018  0x42c80000  0x41200000     -     -     0           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4        500/0x43fa0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #16
+Cycle #16
+**********COMMIT************
+PC of head: 10
+Check_END: 0
+Incrementing ROB head:1
+Size of ROB: 6
+True here as well
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4        500/0x43fa0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #17
+Cycle #17
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 0
+Assigning ROB: 0
+Waited for one cycle
+ROB_Available: 0 at position: 0
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4        500/0x43fa0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #18
+Cycle #18
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 0
+Assigning ROB: 0
+ROB_Available: 1 at position: 0
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:ADDS
+TEMP_PC: 8
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000020     ISSUE    F4           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020  0x41f00000  0x42200000     -     -     0           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4        500/0x43fa0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+CLOCK CYCLE #19
+Cycle #19
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 1
+Into Execute
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Latency of add unit: 2
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 1
+ROB_Available: 1 at position: 1
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:SUBS
+TEMP_PC: 9
+The register was busy
+The register is dependent on ROB: 0
+ISSUE SUCCESS: 1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1   yes     no  0x00000020       EXE    F4           -
+    2   yes     no  0x00000024     ISSUE    F2           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1   yes  0x00000020  0x41f00000  0x42200000     -     -     0           -
+   Add2   yes  0x00000024  0x42480000           -     -     0     1           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2         30/0x41f00000    -
+      F3         40/0x42200000    -
+      F4        500/0x43fa0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+
+EXECUTING PROGRAM TO COMPLETION...
+
+Cycle #20
+**********COMMIT************
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Sel_Add_Unit: 0
+Status: 0
+Sel_Add_Unit: 1
+Status: 1
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Executing the adder unit
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: 10
+Cycle #21
+**********COMMIT************
+Iter: 0
+Busy ROB:1
+Always true
+Head of ROB: 0
+****************WRITE RESULT******************
+Value of ROB:0
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Waited for one clock cycle
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 0
+ROB_BUSY: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 0
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: 10
+Cycle #22
+**********COMMIT************
+PC of head: 20
+Check_END: 1
+Incrementing ROB head:1
+Size of ROB: 6
+Iter: 0
+Busy ROB:0
+Iter: 1
+Busy ROB:1
+Always true
+Head of ROB: 1
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Sel_Add_Unit: 0
+Status: 1
+Into Execute
+Execution loop of add: 0
+Status of adder unit: 0
+Latency of add unit: 2
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: a
+Cycle #23
+**********COMMIT************
+Iter: 0
+Busy ROB:0
+Iter: 1
+Busy ROB:1
+Always true
+Head of ROB: 1
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Sel_Add_Unit: 0
+Status: 0
+Sel_Add_Unit: 1
+Status: 1
+Execution loop of add: 0
+Status of adder unit: 0
+Executing the adder unit
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: 10
+Cycle #24
+**********COMMIT************
+Iter: 0
+Busy ROB:0
+Iter: 1
+Busy ROB:1
+Always true
+Head of ROB: 1
+****************WRITE RESULT******************
+Value of ROB:1
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 1
+ROB_BUSY: 1
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: 10
+Cycle #25
+**********COMMIT************
+PC of head: 24
+Check_END: 1
+Incrementing ROB head:2
+Size of ROB: 6
+Iter: 0
+Busy ROB:0
+Iter: 1
+Busy ROB:0
+Iter: 2
+Busy ROB:0
+Iter: 3
+Busy ROB:0
+Iter: 4
+Busy ROB:0
+Iter: 5
+Busy ROB:0
+Head of ROB: 2
+****************WRITE RESULT******************
+Value of i entering Mul:0
+Flag Mul value: 0
+Value of i entering Mul:1
+Flag Mul value: 0
+Index of flag mem: 0
+flag_mem: 0
+Index of flag mem: 1
+flag_mem: 0
+****************EXECUTE*****************
+Iterator ADD: 0
+Iterator ADD: 1
+Execution loop of add: 0
+Status of adder unit: 1
+Execution loop of add: 1
+Status of adder unit: 1
+Iterating in Mul res station for assignment
+Iterating in Mul res station for assignment
+Is load coming here for execution?
+************ISSUE***************
+Value of HEAD: 2
+ROB_BUSY: 0
+Assigning ROB: 2
+ROB_Available: 1 at position: 2
+RESERVATION STATION Available for INT: 1
+RESERVATION STATION Available for MUL: 1
+RESERVATION STATION Available for ADD: 1
+RESERVATION STATION Available for MEM: 1
+OPCODE in ISSUE:EOP
+TEMP_PC: a
+PROGRAM TERMINATED
+===================
+
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+    6    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1         10/0x0000000a    -
+      R2         20/0x00000014    -
+      R3          0/0x00000000    -
+      F0         10/0x41200000    -
+      F1         10/0x41200000    -
+      F2        -20/0xc1a00000    -
+      F3         40/0x42200000    -
+      F4         70/0x428c0000    -
+      F5         50/0x42480000    -
+      F6         60/0x42700000    -
+      F7         70/0x428c0000    -
+      F8         80/0x42a00000    -
+      F9         90/0x42b40000    -
+      F10        100/0x42c80000    -
+
+DATA MEMORY[0x00000000:0x00000030]
+0x00000000: ff ff ff ff 
+0x00000004: ff ff ff ff 
+0x00000008: ff ff ff ff 
+0x0000000c: ff ff ff ff 
+0x00000010: ff ff ff ff 
+0x00000014: 00 00 20 41 
+0x00000018: ff ff ff ff 
+0x0000001c: ff ff ff ff 
+0x00000020: ff ff ff ff 
+0x00000024: ff ff ff ff 
+0x00000028: 00 00 f0 41 
+0x0000002c: ff ff ff ff 
+
+
+Instruction executed = 7
+Clock cycles = 26
+IPC = 0
