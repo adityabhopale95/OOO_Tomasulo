@@ -39,12 +39,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000000     ISSUE    R0           -
-    2   yes     no  0x00000004     ISSUE    R1           -
-    3   yes     no  0x00000008     ISSUE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
+    0   yes     no  0x00000000     ISSUE    R0           -
+    1   yes     no  0x00000004     ISSUE    R1           -
+    2   yes     no  0x00000008     ISSUE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4    no     no           -         -     -           -
     5    no     no           -         -     -           -
-    6    no     no           -         -     -           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -82,12 +82,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000000       EXE    R0           -
-    2   yes     no  0x00000004     ISSUE    R1           -
-    3   yes     no  0x00000008     ISSUE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000000       EXE    R0           -
+    1   yes     no  0x00000004     ISSUE    R1           -
+    2   yes     no  0x00000008     ISSUE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -125,12 +125,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000000       EXE    R0           -
-    2   yes     no  0x00000004     ISSUE    R1           -
-    3   yes     no  0x00000008     ISSUE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000000       EXE    R0           -
+    1   yes     no  0x00000004     ISSUE    R1           -
+    2   yes     no  0x00000008     ISSUE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -168,12 +168,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000000        WR    R0  0x00000000
-    2   yes     no  0x00000004     ISSUE    R1           -
-    3   yes     no  0x00000008     ISSUE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes    yes  0x00000000        WR    R0  0x00000000
+    1   yes     no  0x00000004     ISSUE    R1           -
+    2   yes     no  0x00000008     ISSUE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -211,12 +211,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1    no     no           -         -     -           -
-    2   yes     no  0x00000004       EXE    R1           -
-    3   yes     no  0x00000008       EXE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0    no     no           -         -     -           -
+    1   yes     no  0x00000004       EXE    R1           -
+    2   yes     no  0x00000008       EXE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -254,12 +254,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2   yes     no  0x00000004       EXE    R1           -
-    3   yes     no  0x00000008       EXE    R2           -
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1   yes     no  0x00000004       EXE    R1           -
+    2   yes     no  0x00000008       EXE    R2           -
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -297,12 +297,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2   yes    yes  0x00000004        WR    R1  0x0000a000
-    3   yes    yes  0x00000008        WR    R2  0x00000004
-    4   yes     no  0x0000000c     ISSUE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1   yes    yes  0x00000004        WR    R1  0x0000a000
+    2   yes    yes  0x00000008        WR    R2  0x00000004
+    3   yes     no  0x0000000c     ISSUE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -340,12 +340,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2    no     no           -         -     -           -
-    3   yes    yes  0x00000008        WR    R2  0x00000004
-    4   yes     no  0x0000000c       EXE    F2           -
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1    no     no           -         -     -           -
+    2   yes    yes  0x00000008        WR    R2  0x00000004
+    3   yes     no  0x0000000c       EXE    F2           -
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -383,12 +383,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2   yes     no  0x0000001c     ISSUE    R2           -
-    3    no     no           -         -     -           -
-    4   yes    yes  0x0000000c        WR    F2  0x3f800000
-    5   yes     no  0x00000010     ISSUE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1   yes     no  0x0000001c     ISSUE    R2           -
+    2    no     no           -         -     -           -
+    3   yes    yes  0x0000000c        WR    F2  0x3f800000
+    4   yes     no  0x00000010     ISSUE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -426,12 +426,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2   yes     no  0x0000001c       EXE    R2           -
-    3   yes     no  0x00000020     ISSUE    R1           -
-    4    no     no           -         -     -           -
-    5   yes     no  0x00000010       EXE    F3           -
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1   yes     no  0x0000001c       EXE    R2           -
+    2   yes     no  0x00000020     ISSUE    R1           -
+    3    no     no           -         -     -           -
+    4   yes     no  0x00000010       EXE    F3           -
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -469,12 +469,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018     ISSUE    F1           -
-    2   yes     no  0x0000001c       EXE    R2           -
-    3   yes     no  0x00000020       EXE    R1           -
-    4   yes     no  0x00000024     ISSUE     -           -
-    5   yes    yes  0x00000010        WR    F3  0x3f800000
-    6   yes     no  0x00000014     ISSUE    F1           -
+    0   yes     no  0x00000018     ISSUE    F1           -
+    1   yes     no  0x0000001c       EXE    R2           -
+    2   yes     no  0x00000020       EXE    R1           -
+    3   yes     no  0x00000024     ISSUE     -           -
+    4   yes    yes  0x00000010        WR    F3  0x3f800000
+    5   yes     no  0x00000014     ISSUE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -512,12 +512,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018       EXE    F1           -
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes     no  0x00000020       EXE    R1           -
-    4   yes     no  0x00000024     ISSUE     -           -
-    5    no     no           -         -     -           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes     no  0x00000018       EXE    F1           -
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes     no  0x00000020       EXE    R1           -
+    3   yes     no  0x00000024     ISSUE     -           -
+    4    no     no           -         -     -           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -555,12 +555,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes     no  0x00000018       EXE    F1           -
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes     no  0x00000024       EXE     -           -
-    5   yes     no  0x00000028     ISSUE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes     no  0x00000018       EXE    F1           -
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes     no  0x00000024       EXE     -           -
+    4   yes     no  0x00000028     ISSUE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -598,12 +598,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes     no  0x00000024       EXE     -           -
-    5   yes     no  0x00000028     ISSUE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes     no  0x00000024       EXE     -           -
+    4   yes     no  0x00000028     ISSUE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -641,12 +641,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -684,12 +684,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -727,12 +727,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -770,12 +770,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -813,12 +813,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -856,12 +856,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
-    1   yes    yes  0x00000018        WR    F1  0x40000000
-    2   yes    yes  0x0000001c        WR    R2  0x00000003
-    3   yes    yes  0x00000020        WR    R1  0x0000a004
-    4   yes    yes  0x00000024        WR     -  0x00000010
-    5   yes     no  0x00000028       EXE    F4           -
-    6   yes     no  0x00000014       EXE    F1           -
+    0   yes    yes  0x00000018        WR    F1  0x40000000
+    1   yes    yes  0x0000001c        WR    R2  0x00000003
+    2   yes    yes  0x00000020        WR    R1  0x0000a004
+    3   yes    yes  0x00000024        WR     -  0x00000010
+    4   yes     no  0x00000028       EXE    F4           -
+    5   yes     no  0x00000014       EXE    F1           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
@@ -903,12 +903,12 @@ PENDING INSTRUCTIONS STATUS
 
 REORDER BUFFER
 Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
     1    no     no           -         -     -           -
     2    no     no           -         -     -           -
     3    no     no           -         -     -           -
     4    no     no           -         -     -           -
     5    no     no           -         -     -           -
-    6    no     no           -         -     -           -
 
 RESERVATION STATIONS
    Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address

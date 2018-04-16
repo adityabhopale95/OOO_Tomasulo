@@ -503,7 +503,7 @@ void sim_ooo::run(unsigned cycles){
 	unsigned PC_index;
 	if(cycles!=0){
 		while (cycles!=0) {
-			std::cout << "Cycle #" << dec << num_cycles << '\n';
+//			std::cout << "Cycle #" << dec << num_cycles << '\n';
 
 			commit_stage();
 
@@ -515,7 +515,7 @@ void sim_ooo::run(unsigned cycles){
 				for(int i = 0; i < issue_size; i++){
 					PC_index = (current_PC - base_add)/4;
 					issue(PC_index);
-					std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
+//					std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
 					if(issue_success == 1){
             pending_ins[current_B].log_pc = current_PC;
             pending_ins[current_B].log_issue = num_cycles;
@@ -526,6 +526,15 @@ void sim_ooo::run(unsigned cycles){
 					}
 				}
 			}
+      if(if_branch == 1){
+        clear_log();
+        clear_rob();
+        clear_res();
+        clear_reg();
+        clear_exe();
+        head_ROB = 0;
+        if_branch = 0;
+      }
 
       num_cycles++;
       clear_flags();
@@ -538,7 +547,7 @@ void sim_ooo::run(unsigned cycles){
 				break;
 			}
 			else{
-				std::cout << "Cycle #" << dec << num_cycles << '\n';
+	//			std::cout << "Cycle #" << dec << num_cycles << '\n';
 				commit_stage();
 
 				write_res();
@@ -559,6 +568,15 @@ void sim_ooo::run(unsigned cycles){
 						}
 					}
 				}
+        if(if_branch == 1){
+          clear_log();
+					clear_rob();
+					clear_res();
+					clear_reg();
+					clear_exe();
+          head_ROB = 0;
+          if_branch = 0;
+        }
         num_cycles++;
         clear_flags();
 			}
@@ -586,10 +604,16 @@ void sim_ooo::clear_flags(){
   for(unsigned i = 0; i < ld_ex_done.size(); i++){
     ld_ex_done[i] = 0;
   }
+
+  for(unsigned i = 0; i < ROB_table.size(); i++){
+    if(ROB_table[i].if_commit == 1){
+      ROB_table[i].if_commit = 0;
+    }
+  }
 }
 
 void sim_ooo::issue(unsigned temp_PC){
-	std::cout << "************ISSUE***************" << '\n';
+//	std::cout << "************ISSUE***************" << '\n';
   char operands_needed[10];
   unsigned hold_val;
   unsigned hold_wr_val = UNDEFINED;
@@ -611,11 +635,11 @@ void sim_ooo::issue(unsigned temp_PC){
       ld_ex_done[i] = 0;
     }
   }*/
-	std::cout << "Value of HEAD: " << head_ROB << '\n';
+	//std::cout << "Value of HEAD: " << head_ROB << '\n';
 	for(unsigned i = head_ROB; i < ROB_table.size(); i++){
-		std::cout << "ROB_BUSY: " << ROB_table[i].rob_busy << '\n';
+	//	std::cout << "ROB_BUSY: " << ROB_table[i].rob_busy << '\n';
 		if(ROB_table[i].rob_busy != 1){
-			std::cout << "Assigning ROB: " << i << '\n';
+		//	std::cout << "Assigning ROB: " << i << '\n';
 			/*if(ROB_table[i].if_commit == 1){
 				ROB_table[i].if_commit = 0;
 				rob_yes = 0;
@@ -666,17 +690,45 @@ void sim_ooo::issue(unsigned temp_PC){
 		}
 	}
 
-	for(unsigned i = 0; i < ROB_table.size(); i++){
+	/*for(unsigned i = 0; i < ROB_table.size(); i++){
 		if(ROB_table[i].if_commit == 1){
       std::cout << "Came here since if_commit was 1" << '\n';
+      std::cout << "Value of i: " << i << '\n';
 			ROB_table[i].if_commit = 0;
 			if(current_B == i){
 				current_B = UNDEFINED;
 				rob_yes = 0;
+        break;
 			}
-			//break;
 		}
-	}
+	}*/
+
+    if(head_ROB == 0){
+      if(current_B == (ROB_table.size()-1)){
+        if(ROB_table[current_B].if_commit == 1){
+          ROB_table[current_B].if_commit = 0;
+          current_B = UNDEFINED;
+          rob_yes = 0;
+        }
+      }
+    }
+    else{
+  //    std::cout << "Head ROB not 0" << '\n';
+  //    std::cout << "Value of current B: " << current_B << '\n';
+      if(current_B == (head_ROB - 1)){
+        if(ROB_table[current_B].if_commit == 1){
+          ROB_table[current_B].if_commit = 0;
+          current_B = UNDEFINED;
+          rob_yes = 0;
+        }
+      }
+    }
+
+    /*for(unsigned i = 0; i < ROB_table.size(); i++){
+      if(ROB_table[i].if_commit == 1){
+        ROB_table[i].if_commit = 0;
+      }
+    }*/
 
   for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
     if(int_ex_done[iter] == 1){
@@ -706,7 +758,7 @@ void sim_ooo::issue(unsigned temp_PC){
 		if(RES_Stat_Int[it].res_busy!=1){
 			if(RES_Stat_Int[it].wr_done == 1){
 				RES_Stat_Int[it].wr_done = 0;
-				std::cout << "Wasted a life here for i: " << it << '\n';
+	//			std::cout << "Wasted a life here for i: " << it << '\n';
 				res_yes_int = 0;
 				continue;
 			}
@@ -827,14 +879,14 @@ void sim_ooo::issue(unsigned temp_PC){
 			res_yes_load = 0;
 		}
 	}
-	std::cout << "ROB_Available: " << rob_yes << " at position: " << current_B <<'\n';
-	std::cout << "RESERVATION STATION Available for INT: " << res_yes_int << '\n';
-	std::cout << "RESERVATION STATION Available for MUL: " << res_yes_mul << '\n';
-	std::cout << "RESERVATION STATION Available for ADD: " << res_yes_add << '\n';
-	std::cout << "RESERVATION STATION Available for MEM: " << res_yes_load << '\n';
+	//std::cout << "ROB_Available: " << rob_yes << " at position: " << current_B <<'\n';
+	//std::cout << "RESERVATION STATION Available for INT: " << res_yes_int << '\n';
+	//std::cout << "RESERVATION STATION Available for MUL: " << res_yes_mul << '\n';
+	//std::cout << "RESERVATION STATION Available for ADD: " << res_yes_add << '\n';
+	//std::cout << "RESERVATION STATION Available for MEM: " << res_yes_load << '\n';
 
-	std::cout << "OPCODE in ISSUE:" << instruction_memory[temp_PC].op_code << '\n';
-	std::cout << "TEMP_PC: " << temp_PC << '\n';
+	//std::cout << "OPCODE in ISSUE:" << instruction_memory[temp_PC].op_code << '\n';
+	//std::cout << "TEMP_PC: " << temp_PC << '\n';
   switch (opcode_map[instruction_memory[temp_PC].op_code]) {
     case XOR:
   	case ADD:
@@ -865,9 +917,9 @@ void sim_ooo::issue(unsigned temp_PC){
 					}
 	      }
 				else{
-					std::cout << "Value loaded: " << register_file[hold_val1] << '\n';
+		//			std::cout << "Value loaded: " << register_file[hold_val1] << '\n';
 					RES_Stat_Int[current_R_int].Vj = register_file[hold_val1];
-					std::cout << "Vj: " << RES_Stat_Int[current_R_int].Vj << '\n';
+		//			std::cout << "Vj: " << RES_Stat_Int[current_R_int].Vj << '\n';
 					RES_Stat_Int[current_R_int].Qj = 0;
 					RES_Stat_Int[current_R_int].if_depend_Vj = 0;
 				}
@@ -892,7 +944,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				}
 				else{
 					RES_Stat_Int[current_R_int].Vk = register_file[hold_val2];
-					std::cout << "Vk: " << RES_Stat_Int[current_R_int].Vk << '\n';
+		//			std::cout << "Vk: " << RES_Stat_Int[current_R_int].Vk << '\n';
 					RES_Stat_Int[current_R_int].Qk = 0;
 					RES_Stat_Int[current_R_int].if_depend_Vk = 0;
 				}
@@ -1062,7 +1114,7 @@ void sim_ooo::issue(unsigned temp_PC){
 			if(res_yes_int == 1 && rob_yes == 1){
 				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
 					if(int_ex_done[iter] == 1){
-						std::cout << "Made the ex unit available" << '\n';
+			//			std::cout << "Made the ex unit available" << '\n';
 						int_ex_done[iter] = 0;
 					}
 				}
@@ -1154,9 +1206,9 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].rob_busy = 1;
 
 				if(float_reg_stat[hold_val2].reg_busy){
-					std::cout << "The register was busy" << '\n';
+			//		std::cout << "The register was busy" << '\n';
 					h_val = float_reg_stat[hold_val2].ROB_num;
-					std::cout << "The register is dependent on ROB: " << h_val << '\n';
+			//		std::cout << "The register is dependent on ROB: " << h_val << '\n';
 					if(ROB_table[h_val].ready){
 						RES_Stat_Add[current_R_add].Vk = ROB_table[h_val].rob_val;
 						RES_Stat_Add[current_R_add].Qk = 0;
@@ -1190,7 +1242,7 @@ void sim_ooo::issue(unsigned temp_PC){
 			break;
 
 		case MULTS:
-			std::cout << "Came here in MULTS" << '\n';
+		//	std::cout << "Came here in MULTS" << '\n';
 			if(res_yes_mul == 1 && rob_yes == 1){
 				issue_success = 1;
 				for(unsigned iter = 0; iter < mul_ex_done.size(); iter++){
@@ -1334,7 +1386,7 @@ void sim_ooo::issue(unsigned temp_PC){
 		case BGTZ:
 		case BLEZ:
 		case BGEZ:
-			std::cout << "RES_YES_INT: " << res_yes_int << '\n';
+		//	std::cout << "RES_YES_INT: " << res_yes_int << '\n';
 			if(res_yes_int == 1 && rob_yes == 1){
 				for(unsigned iter = 0; iter < int_ex_done.size(); iter++){
 					if(int_ex_done[iter] == 1){
@@ -1469,7 +1521,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				strcpy(operands_needed, instruction_memory[temp_PC].remainder_operand1.c_str());
 				pch1 = strtok(operands_needed, " ( ");
 				hold_val_imm1 = atoi(pch1);
-				std::cout << "hold_val_imm1: " << hold_val_imm1 << '\n';
+		//		std::cout << "hold_val_imm1: " << hold_val_imm1 << '\n';
 				RES_Stat_Load[current_R_ld].res_A = hold_val_imm1;
 
 				while(pch1 != NULL)
@@ -1514,7 +1566,7 @@ void sim_ooo::issue(unsigned temp_PC){
 				ROB_table[current_B].dest_type = FLOAT_RES;
 				RES_Stat_Load[current_R_ld].op = MEMORY;
 				RES_Stat_Load[current_R_ld].op_num = temp_PC;
-				std::cout << "Reservation station opcode number: " << RES_Stat_Load[current_R_ld].op_num << '\n';
+		//		std::cout << "Reservation station opcode number: " << RES_Stat_Load[current_R_ld].op_num << '\n';
 				RES_Stat_Load[current_R_ld].res_pc = temp_PC*4 + base_add;
 			}
 			else{
@@ -1700,7 +1752,7 @@ void sim_ooo::issue(unsigned temp_PC){
 }
 
 void sim_ooo::execute_ins(){
-	std::cout << "****************EXECUTE*****************" << '\n';
+//	std::cout << "****************EXECUTE*****************" << '\n';
 	unsigned hold_int;
 	unsigned hold_add;
 	unsigned hold_mul;
@@ -1753,7 +1805,7 @@ void sim_ooo::execute_ins(){
 	for(unsigned sel_int_unit = 0; sel_int_unit < big_int.size(); sel_int_unit++){
 		if(big_int[sel_int_unit].status == 0){
 			if(num_latency_int[sel_int_unit] > 1){
-				std::cout << "Latency of Int: " << num_latency_int[sel_int_unit] << '\n';
+		//		std::cout << "Latency of Int: " << num_latency_int[sel_int_unit] << '\n';
 				num_latency_int[sel_int_unit]--;
 				flag_int[big_int[sel_int_unit].res_stat_num] = 0;
 			}
@@ -1894,7 +1946,7 @@ void sim_ooo::execute_ins(){
 		}
 	}
 	for(unsigned i = 0; i < RES_Stat_Add.size(); i++){
-		std::cout << "Iterator ADD: " << i << '\n';
+	//	std::cout << "Iterator ADD: " << i << '\n';
 		if(RES_Stat_Add[i].res_busy == 1){
 			if((RES_Stat_Add[i].Qj == 0) && (RES_Stat_Add[i].Qk == 0)){
 				if(RES_Stat_Add[i].if_depend_Vj == 1 || RES_Stat_Add[i].if_depend_Vk == 1){
@@ -1905,22 +1957,22 @@ void sim_ooo::execute_ins(){
 							add_ex_done[it] = 0;
 						}
 					}
-					std::cout << "Waited for one clock cycle" << '\n';
+			//		std::cout << "Waited for one clock cycle" << '\n';
 					continue;
 				}
 				switch (RES_Stat_Add[i].op){
 					case ADDER:
 						for(unsigned sel_add_unit = 0; sel_add_unit < big_add.size(); sel_add_unit++){
-							std::cout << "Sel_Add_Unit: " << sel_add_unit << '\n';
-							std::cout << "Status: " << big_add[sel_add_unit].status << '\n';
+			//				std::cout << "Sel_Add_Unit: " << sel_add_unit << '\n';
+			//				std::cout << "Status: " << big_add[sel_add_unit].status << '\n';
 							if((big_add[sel_add_unit].status == 1) && (ROB_table[RES_Stat_Add[i].res_dest].state == ISSUE)){
 								if(add_ex_done[sel_add_unit] == 1){
-									std::cout << "Also waited here for one clock cycle" << '\n';
+			//						std::cout << "Also waited here for one clock cycle" << '\n';
 									add_ex_done[sel_add_unit] = 0;
 									continue;
 								}
 
-								std::cout << "Into Execute" << '\n';
+				//				std::cout << "Into Execute" << '\n';
                 RES_Stat_Add[i].execution_unit_used = sel_add_unit;
                 pending_ins[RES_Stat_Add[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Add[i].res_dest].state = EXECUTE;
@@ -1940,16 +1992,16 @@ void sim_ooo::execute_ins(){
 	}
 
 	for(unsigned sel_add_unit = 0; sel_add_unit < big_add.size(); sel_add_unit++){
-		std::cout << "Execution loop of add: " << sel_add_unit << '\n';
-		std::cout << "Status of adder unit: " << big_add[sel_add_unit].status << '\n';
+	//	std::cout << "Execution loop of add: " << sel_add_unit << '\n';
+	//	std::cout << "Status of adder unit: " << big_add[sel_add_unit].status << '\n';
 		if(big_add[sel_add_unit].status == 0){
 			if(num_latency_add[sel_add_unit] > 1){
-				std::cout << "Latency of add unit: " << num_latency_add[sel_add_unit] << '\n';
+	//			std::cout << "Latency of add unit: " << num_latency_add[sel_add_unit] << '\n';
 				num_latency_add[sel_add_unit]--;
 				flag_add[big_add[sel_add_unit].res_stat_num] = 0;
 			}
 			else{
-				std::cout << "Executing the adder unit" << '\n';
+	//			std::cout << "Executing the adder unit" << '\n';
 				flag_add[big_add[sel_add_unit].res_stat_num] = 1;
 				switch (opcode_map[instruction_memory[RES_Stat_Add[big_add[sel_add_unit].res_stat_num].op_num].op_code]) {
 					case ADDS:
@@ -1975,9 +2027,9 @@ void sim_ooo::execute_ins(){
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
-		std::cout << "Iterating in Mul res station for assignment" << '\n';
+	//	std::cout << "Iterating in Mul res station for assignment" << '\n';
 		if(RES_Stat_Mul[i].res_busy == 1){
-			std::cout << "Found this busy" << '\n';
+	//		std::cout << "Found this busy" << '\n';
 			if((RES_Stat_Mul[i].Qj == 0) && (RES_Stat_Mul[i].Qk == 0)){
 				if(RES_Stat_Mul[i].if_depend_Vj == 1 || RES_Stat_Mul[i].if_depend_Vk == 1){
 					RES_Stat_Mul[i].if_depend_Vj = 0;
@@ -1989,8 +2041,8 @@ void sim_ooo::execute_ins(){
 					}
 					continue;
 				}
-				std::cout << "No dependencies whatsoever" << '\n';
-				std::cout << "Divider or Mult??" << RES_Stat_Mul[i].op << '\n';
+		//		std::cout << "No dependencies whatsoever" << '\n';
+		//		std::cout << "Divider or Mult??" << RES_Stat_Mul[i].op << '\n';
 				switch (RES_Stat_Mul[i].op) {
 					case MULTIPLIER:
 						for(unsigned sel_mul_unit = 0; sel_mul_unit < big_mul.size(); sel_mul_unit++){
@@ -2013,15 +2065,15 @@ void sim_ooo::execute_ins(){
 
 					case DIVIDER:
 						for(unsigned sel_div_unit = 0; sel_div_unit < big_div.size(); sel_div_unit++){
-							std::cout << "In Div iterator" << '\n';
+		//					std::cout << "In Div iterator" << '\n';
 							if(big_div[sel_div_unit].status == 1 && ROB_table[RES_Stat_Mul[i].res_dest].state == ISSUE){
-								std::cout << "Checking if div assignment possible" << '\n';
+		//						std::cout << "Checking if div assignment possible" << '\n';
 								if(div_ex_done[sel_div_unit] == 1){
 									div_ex_done[sel_div_unit] = 0;
 									continue;
 								}
 
-								std::cout << "No problems in assigning" << '\n';
+		//						std::cout << "No problems in assigning" << '\n';
 								big_div[sel_div_unit].status = 0;
                 pending_ins[RES_Stat_Mul[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Mul[i].res_dest].state = EXECUTE;
@@ -2053,7 +2105,7 @@ void sim_ooo::execute_ins(){
 				flag_mul[big_mul[sel_mul_unit].res_stat_num] = 0;
 			}
 			else{
-				std::cout << "In for execution in multiplier" << '\n';
+		//		std::cout << "In for execution in multiplier" << '\n';
 				flag_mul[big_mul[sel_mul_unit].res_stat_num] = 1;
 				switch (opcode_map[instruction_memory[RES_Stat_Mul[big_mul[sel_mul_unit].res_stat_num].op_num].op_code]) {
 					case MULT:
@@ -2115,51 +2167,51 @@ void sim_ooo::execute_ins(){
 				switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
 					case LW:
 					case LWS:
-						std::cout << "Calculating PC: " << RES_Stat_Load[i].res_pc << '\n';
+		//				std::cout << "Calculating PC: " << RES_Stat_Load[i].res_pc << '\n';
 						if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) >= (head_ROB)){
 							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
-								std::cout << "Value of a in this condition: " << a << '\n';
+		//						std::cout << "Value of a in this condition: " << a << '\n';
 								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 									//std::cout << "There is a store" << '\n';
 									if(int_reg_stat[ROB_table[a].add_reg].reg_busy != 1){
 										store_check = 1;
-										std::cout << "Store detected and it does not have indeterminate address" << '\n';
+		//								std::cout << "Store detected and it does not have indeterminate address" << '\n';
 										//break;
 									}
 									else{
-										std::cout << "Busy stores present in Load Step 1" << '\n';
+		//								std::cout << "Busy stores present in Load Step 1" << '\n';
 										store_check = 0;
                     break;
 									}
                   //break;
 								}
 								else{
-									std::cout << "No stores in Load Step 1" << '\n';
+		//							std::cout << "No stores in Load Step 1" << '\n';
 									store_check = 1;
 								}
 							}
 						}
 						else{
 							for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
-								std::cout << "Value of a: " << a << '\n';
+			//					std::cout << "Value of a: " << a << '\n';
 								if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 								||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 									//std::cout << "There is a store" << '\n';
 									if(int_reg_stat[ROB_table[a].add_reg].reg_busy != 1){
-										std::cout << "Store detected and it does not have indeterminate address" << '\n';
+			//							std::cout << "Store detected and it does not have indeterminate address" << '\n';
 										store_check = 1;
 										//break;
 									}
 									else{
-										std::cout << "Busy stores detected in Load Step 1" << '\n';
+			//							std::cout << "Busy stores detected in Load Step 1" << '\n';
 										store_check = 0;
                     break;
 									}
 									//break;
 								}
 								else{
-									std::cout << "No stores in Load Step 1" << '\n';
+			//						std::cout << "No stores in Load Step 1" << '\n';
 									store_check = 1;
 								}
 							}
@@ -2167,19 +2219,19 @@ void sim_ooo::execute_ins(){
 								for(int a = (ROB_table.size() - 1) ; a >= head_ROB; a--){
 									if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 									||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-										std::cout << "Store detected first up" << '\n';
+		//								std::cout << "Store detected first up" << '\n';
 										if(int_reg_stat[ROB_table[a].add_reg].reg_busy != 1){
-                      std::cout << "Store detected and it does not have indeterminate address" << '\n';
+      //                std::cout << "Store detected and it does not have indeterminate address" << '\n';
                       store_check = 1;
 											break;
 										}
 										else{
-                      std::cout << "Busy stores" << '\n';
+    //                  std::cout << "Busy stores" << '\n';
 											store_check = 0;
 										}
 									}
 									else{
-										std::cout << "Store not detected" << '\n';
+		//								std::cout << "Store not detected" << '\n';
 										store_check = 1;
 									}
 								}
@@ -2187,9 +2239,9 @@ void sim_ooo::execute_ins(){
 					}
 
 					if(RES_Stat_Load[i].Qj == 0 && store_check == 1){
-						std::cout << "This condition was satisfied" << '\n';
+		//				std::cout << "This condition was satisfied" << '\n';
 						temp_res_add[i] = RES_Stat_Load[i].Vj + RES_Stat_Load[i].res_A;
-						std::cout << "Address Load: " << hex << temp_res_add[i] << '\n';
+		//				std::cout << "Address Load: " << hex << temp_res_add[i] << '\n';
 						ld_step1[i] = 1;
 						ld_current_exe[i] = 1;
 					}
@@ -2201,17 +2253,17 @@ void sim_ooo::execute_ins(){
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
 		if(ld_step1[i] == 1 && ld_step2[i] == 0){
-			std::cout << "first step of load was satisfied" << '\n';
-			std::cout << "Value of i: " << i << '\n';
-			std::cout << "Value of entry: " << RES_Stat_Load[i].res_dest << '\n';
-			std::cout << "Calculating PC after step 1 is over: " << dec << RES_Stat_Load[i].res_pc << '\n';
+	//		std::cout << "first step of load was satisfied" << '\n';
+	//		std::cout << "Value of i: " << i << '\n';
+	//		std::cout << "Value of entry: " << RES_Stat_Load[i].res_dest << '\n';
+	//		std::cout << "Calculating PC after step 1 is over: " << dec << RES_Stat_Load[i].res_pc << '\n';
 			if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) >= (head_ROB)){
 				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= head_ROB ; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-						std::cout << "Store detected for load step 2" << '\n';
-						std::cout << "The address at store ROB table: " << ROB_table[a].str_add << '\n';
-						std::cout << "The address for load: " << temp_res_add[i] << '\n';
+	//					std::cout << "Store detected for load step 2" << '\n';
+	//					std::cout << "The address at store ROB table: " << ROB_table[a].str_add << '\n';
+	//					std::cout << "The address for load: " << temp_res_add[i] << '\n';
 						if(temp_res_add[i] == ROB_table[a].str_add){
 
 							needs_ex_ld[i] = 0;
@@ -2226,17 +2278,17 @@ void sim_ooo::execute_ins(){
               else{
 							  RES_Stat_Load[i].address_raw = a+1;
               }
-              std::cout << "There is an address raw" << '\n';
+  //            std::cout << "There is an address raw" << '\n';
 							break;
 						}
 						else{
-              std::cout << "No address raw" << '\n';
+  //            std::cout << "No address raw" << '\n';
 							needs_ex_ld[i] = 1;
 							RES_Stat_Load[i].address_raw = 0;
 						}
 					}
 					else{
-						std::cout << "Store not detected" << '\n';
+	//					std::cout << "Store not detected" << '\n';
 						needs_ex_ld[i] = 1;
 						RES_Stat_Load[i].address_raw = 0;
 					}
@@ -2246,8 +2298,8 @@ void sim_ooo::execute_ins(){
 				for(int a = (ROB_table[RES_Stat_Load[i].res_dest].entry - 1); a >= 0; a--){
 					if((opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SW)
 					||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
-						std::cout << "The address at store ROB table: " << ROB_table[a].str_add << '\n';
-						std::cout << "The address for load: " << temp_res_add[i] << '\n';
+		//				std::cout << "The address at store ROB table: " << ROB_table[a].str_add << '\n';
+		//				std::cout << "The address for load: " << temp_res_add[i] << '\n';
 						if(temp_res_add[i] == ROB_table[a].str_add){
 							needs_ex_ld[i] = 0;
               if(ROB_table[a].is_available){
@@ -2261,19 +2313,19 @@ void sim_ooo::execute_ins(){
               else{
 							  RES_Stat_Load[i].address_raw = a+1;
               }
-              std::cout << "Address RAW present" << '\n';
+//              std::cout << "Address RAW present" << '\n';
 							break;
 						}
 						else{
 							RES_Stat_Load[i].address_raw = 0;
 							needs_ex_ld[i] = 1;
-              std::cout << "No address raw" << '\n';
+//              std::cout << "No address raw" << '\n';
 						}
 					}
 					else{
 						needs_ex_ld[i] = 1;
 						RES_Stat_Load[i].address_raw = 0;
-            std::cout << "No store detected. Allocating memory functional unit" << '\n';
+//            std::cout << "No store detected. Allocating memory functional unit" << '\n';
 					}
 				}
 				//if(needs_ex_ld[i] == 1){
@@ -2282,8 +2334,8 @@ void sim_ooo::execute_ins(){
 						||(opcode_map[instruction_memory[ROB_table[a].rob_temp_pc].op_code] == SWS)){
 							if(temp_res_add[i] == ROB_table[a].str_add){
 								needs_ex_ld[i] = 0;
-                std::cout << "Value of entry of ROB: " << a << '\n';
-                std::cout << "Availibity of address: " << ROB_table[a].is_available << '\n';
+//                std::cout << "Value of entry of ROB: " << a << '\n';
+//                std::cout << "Availibity of address: " << ROB_table[a].is_available << '\n';
                 if(ROB_table[a].is_available){
                   RES_Stat_Load[i].from_forward = ROB_table[a].rob_val;
                   RES_Stat_Load[i].address_raw = 0;
@@ -2294,7 +2346,7 @@ void sim_ooo::execute_ins(){
                 else{
   							  RES_Stat_Load[i].address_raw = a+1;
                 }
-                std::cout << "Checking again" << '\n';
+//                std::cout << "Checking again" << '\n';
 								break;
 							}
 							else{
@@ -2324,14 +2376,14 @@ void sim_ooo::execute_ins(){
 			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
 				case LW:
 				case LWS:
-					std::cout << "Ikde aala re baba" << '\n';
+//					std::cout << "Ikde aala re baba" << '\n';
 						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
 							if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE){
 								if(ld_ex_done[sel_ld_unit] == 1){
 									ld_ex_done[sel_ld_unit] = 0;
 									continue;
 								}
-                std::cout << "Allocating execution unit for LOAD" << '\n';
+//                std::cout << "Allocating execution unit for LOAD" << '\n';
 								big_mem[sel_ld_unit].status = 0;
                 pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
 								ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
@@ -2350,11 +2402,11 @@ void sim_ooo::execute_ins(){
 			}
 		}
 		else if(needs_ex_ld[i] == 0){
-			std::cout << "Mem execution unit not required and waiting for store to bypass" << '\n';
-			std::cout << "Dependency at: " << i << '\n';
-      std::cout << "The value of address_raw flag: " << RES_Stat_Load[i].address_raw <<'\n';
+	//		std::cout << "Mem execution unit not required and waiting for store to bypass" << '\n';
+	//		std::cout << "Dependency at: " << i << '\n';
+  //    std::cout << "The value of address_raw flag: " << RES_Stat_Load[i].address_raw <<'\n';
 			if(RES_Stat_Load[i].address_raw == 0){
-				std::cout << "Came to take the bypassed value" << '\n';
+	//			std::cout << "Came to take the bypassed value" << '\n';
 				if(ld_current_exe[i] == 1){
 					ld_current_exe[i] = 0;
 					continue;
@@ -2374,14 +2426,14 @@ void sim_ooo::execute_ins(){
 	}
 
 	for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-    std::cout << "Store " << '\n';
+  //  std::cout << "Store " << '\n';
 		if(is_store_ex == 0){
-			std::cout << "Is load coming here for execution?" << '\n';
+	//		std::cout << "Is load coming here for execution?" << '\n';
 			if(big_mem[sel_ld_unit].status == 0){
-				std::cout << "Mem latency unit is busy" << '\n';
-				std::cout << "Latency of mem before decrementing: " << num_latency_mem[sel_ld_unit] << '\n';
+	//			std::cout << "Mem latency unit is busy" << '\n';
+		//		std::cout << "Latency of mem before decrementing: " << num_latency_mem[sel_ld_unit] << '\n';
 				if(num_latency_mem[sel_ld_unit] > 1){
-					std::cout << "Latency of Mem Unit: " << num_latency_mem[sel_ld_unit] << '\n';
+		//			std::cout << "Latency of Mem Unit: " << num_latency_mem[sel_ld_unit] << '\n';
 					num_latency_mem[sel_ld_unit]--;
 					flag_mem[big_mem[sel_ld_unit].res_stat_num] = 0;
 				}
@@ -2412,126 +2464,9 @@ void sim_ooo::execute_ins(){
 	}
 
 
-	/*
-	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(needs_ex_ld[i] == 1){
-			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
-				if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
-					RES_Stat_Load[i].if_depend_Vj = 0;
-					RES_Stat_Load[i].if_depend_Vk = 0;
-					for(unsigned it = 0; it < ld_ex_done.size(); it++){
-						if(ld_ex_done[it] == 1){
-							ld_ex_done[it] = 0;
-						}
-					}
-					continue;
-				}
-				switch (RES_Stat_Load[i].op) {
-					case MEMORY:
-
-						if(is_store_ex == 0){
-
-							for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-								if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE){
-									if(ld_ex_done[sel_ld_unit] == 1){
-										ld_ex_done[sel_ld_unit] = 0;
-										continue;
-									}
-
-									big_mem[sel_ld_unit].status = 0;
-									ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
-									RES_Stat_Load[i].use_ex = 1;
-									big_mem[sel_ld_unit].res_stat_num = i;
-									needs_ex_ld[i] = UNDEFINED;
-								}
-							}
-					}
-				}
-			}
-		}
-		else if(needs_ex_ld[i] == 0 && RES_Stat_Load[i].address_raw == 0){
-			flag_mem[i] = 1;
-			mem_result[i] = RES_Stat_Load[i].from_forward;
-			ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
-		}
-	}
-*/
-/*
-	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(RES_Stat_Load[i].res_busy == 1){
-			if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
-				if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
-					RES_Stat_Load[i].if_depend_Vj = 0;
-					RES_Stat_Load[i].if_depend_Vk = 0;
-					for(unsigned it = 0; it < ld_ex_done.size(); it++){
-						if(ld_ex_done[it] == 1){
-							ld_ex_done[it] = 0;
-						}
-					}
-					continue;
-				}
-				switch(RES_Stat_Load[i].op){
-					case MEMORY:
-						std::cout << "Loading the functional unit in execution stage" << '\n';
-						std::cout << "BIG MEM SIZE: " << big_mem.size() << '\n';
-						for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-							std::cout << "Status of Mem execution unit: " << big_mem[sel_ld_unit].status << '\n';
-							std::cout << "State of Load: " << ROB_table[RES_Stat_Load[i].res_dest].state << '\n';
-							std::cout << "Size of LOAD EX: " << ld_ex_done.size() << '\n';
-							if(big_mem[sel_ld_unit].status == 1 && ROB_table[RES_Stat_Load[i].res_dest].state == ISSUE ){
-								if(ld_ex_done[sel_ld_unit] == 1){
-									std::cout << "Came here" << '\n';
-									ld_ex_done[sel_ld_unit] = 0;
-									continue;
-								}
-
-								std::cout << "Allocating functional unit" << '\n';
-								big_mem[sel_ld_unit].status = 0;
-								std::cout << "Value of ROB index: " << RES_Stat_Load[i].res_dest << '\n';
-								ROB_table[RES_Stat_Load[i].res_dest].state = EXECUTE;
-								RES_Stat_Load[i].use_ex = 1;
-								big_mem[sel_ld_unit].res_stat_num = i;
-								//num_latency_mem[sel_ld_unit]--;
-								switch (opcode_map[instruction_memory[RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].op_num].op_code]) {
-									case LW:
-									case LWS:
-										if((ROB_table[RES_Stat_Load[i].res_dest].entry - 1) > head_ROB){
-											for(unsigned iter_ld = head_ROB; iter_ld < (ROB_table[RES_Stat_Load[i].res_dest].entry - 1) ; iter_ld++){
-												if((opcode_map[instruction_memory[ROB_table[iter_ld].rob_temp_pc].op_code] == SW)
-												|| (opcode_map[instruction_memory[ROB_table[iter_ld].rob_temp_pc].op_code] == SWS)) {
-													store_check = 1;
-													break;
-												}
-												else{
-													store_check = 0;
-												}
-											}
-										}
-										if((RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0) && (store_check != 1)){
-//										if(RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0){
-											RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
-
-										}
-										break;
-
-									default:
-										break;
-									}
-								break;
-							}
-						}
-						break;
-
-					default:
-						break;
-				}
-			}
-		}
-	}
-*/
 
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		std::cout << "Busy status of reservation station: " << RES_Stat_Load[i].res_busy <<'\n';
+	//	std::cout << "Busy status of reservation station: " << RES_Stat_Load[i].res_busy <<'\n';
 		if(RES_Stat_Load[i].res_busy){
 			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
 				case SW:
@@ -2559,16 +2494,16 @@ void sim_ooo::execute_ins(){
 					break;
 
 				case SWS:
-					std::cout << "OPCODE check in SWS: " << instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code << '\n';
-					std::cout << "Yes this is execution of SWS" << '\n';
-					std::cout << "Qj: " << RES_Stat_Load[i].Qj << '\n';
-					std::cout << "Qk: " << RES_Stat_Load[i].Qk << '\n';
+		//			std::cout << "OPCODE check in SWS: " << instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code << '\n';
+		//			std::cout << "Yes this is execution of SWS" << '\n';
+		//			std::cout << "Qj: " << RES_Stat_Load[i].Qj << '\n';
+		//			std::cout << "Qk: " << RES_Stat_Load[i].Qk << '\n';
 					if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0)){
-						std::cout << "Both conditions satisfied with Qj and Qk" << '\n';
-						std::cout << "IF DEPEND Vj: " << RES_Stat_Load[i].if_depend_Vj << '\n';
-						std::cout << "IF DEPEND Vk: " << RES_Stat_Load[i].if_depend_Vk << '\n';
+		//				std::cout << "Both conditions satisfied with Qj and Qk" << '\n';
+		//				std::cout << "IF DEPEND Vj: " << RES_Stat_Load[i].if_depend_Vj << '\n';
+		//				std::cout << "IF DEPEND Vk: " << RES_Stat_Load[i].if_depend_Vk << '\n';
 						if(RES_Stat_Load[i].if_depend_Vj == 1 || RES_Stat_Load[i].if_depend_Vk == 1){
-							std::cout << "Making dependencies in SWS zero and stalling" << '\n';
+		//					std::cout << "Making dependencies in SWS zero and stalling" << '\n';
 							RES_Stat_Load[i].if_depend_Vj = 0;
 							RES_Stat_Load[i].if_depend_Vk = 0;
 								/*if(ld_current_exe[i] == 1){
@@ -2580,10 +2515,10 @@ void sim_ooo::execute_ins(){
 								ld_current_exe[i] = 0;
 								continue;
 							}*/
-            std::cout << "Value of Vk: " << RES_Stat_Load[i].Vk << '\n';
-            std::cout << "Value of IMM: " << RES_Stat_Load[i].res_A << '\n';
+    //        std::cout << "Value of Vk: " << RES_Stat_Load[i].Vk << '\n';
+    //        std::cout << "Value of IMM: " << RES_Stat_Load[i].res_A << '\n';
 						ROB_table[RES_Stat_Load[i].res_dest].rob_dest = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
-            std::cout << "Destination address: " << hex << ROB_table[RES_Stat_Load[i].res_dest].rob_dest << '\n';
+    //        std::cout << "Destination address: " << hex << ROB_table[RES_Stat_Load[i].res_dest].rob_dest << '\n';
 						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
 						ROB_table[RES_Stat_Load[i].res_dest].dest_type = STORE_DEST;
             pending_ins[RES_Stat_Load[i].res_dest].log_execute = num_cycles;
@@ -2595,89 +2530,11 @@ void sim_ooo::execute_ins(){
 			}
 		}
 	}
-/*	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		if(RES_Stat_Load[i].res_busy){
-			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]) {
-				case SW:
-					if((RES_Stat_Load[i].Qj == 0) && (RES_Stat_Load[i].Qk == 0) && (opcode_map[instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code] == SW)){
-						ROB_table[head_ROB].rob_dest = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
-						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
-						ROB_table[head_ROB].dest_type = STORE_DEST;
-						ROB_table[head_ROB].state = EXECUTE;
-						flag_mem[i] = 1;
-					}
-					break;
 
-				case SWS:
-					if((RES_Stat_Load[i].Qj == 0) && ((RES_Stat_Load[i].Qk == 0)) && opcode_map[instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code] == SWS){
-						ROB_table[head_ROB].rob_dest = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
-						RES_Stat_Load[i].res_A = RES_Stat_Load[i].Vk + RES_Stat_Load[i].res_A;
-						ROB_table[head_ROB].dest_type = STORE_DEST;
-						ROB_table[head_ROB].state = EXECUTE;
-						flag_mem[i] = 1;
-					}
-					break;
-
-				}
-		}
-	}
-/*
-	for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-		std::cout << "Status of Mem when executing: " << big_mem[sel_ld_unit].status << '\n';
-		if(big_mem[sel_ld_unit].status == 0){
-			std::cout << "Latency of mem unit remaining: " << num_latency_mem[sel_ld_unit] << '\n';
-			if(num_latency_mem[sel_ld_unit] > 1){
-				std::cout << "The State in ROB: " << ROB_table[0].state << endl;
-				std::cout << "Decrementing Latency" << '\n';
-				num_latency_mem[sel_ld_unit]--;
-				std::cout << "Index while latency: " << sel_ld_unit << '\n';
-				std::cout << "Flag while latency: " << flag_mem[sel_ld_unit] << '\n';
-				flag_mem[big_mem[sel_ld_unit].res_stat_num] = 0;
-			}
-			else{
-				std::cout << "Load Unit: " << sel_ld_unit << '\n';
-				std::cout << "Flag of mem unit right now: " << flag_mem[sel_ld_unit] << '\n';
-				flag_mem[big_mem[sel_ld_unit].res_stat_num] = 1;
-				std::cout << "Got into Load" << '\n';
-				std::cout << "Served Station: " << big_mem[sel_ld_unit].res_stat_num << '\n';
-				std::cout << "Op_Num: " << RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].op_num << '\n';
-				switch (opcode_map[instruction_memory[RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].op_num].op_code]) {
-					case LW:
-					case LWS:
-					std::cout << "In Load" << '\n';
-						mem_result[big_mem[sel_ld_unit].res_stat_num] = char2unsigned(data_memory + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A);
-						break;
-
-					/*case SWS:
-					case SW:
-						if((opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SW)
-						||(opcode_map[instruction_memory[ROB_table[head_ROB].rob_pc].op_code] == SWS)){
-							sw_check_head = 1;
-						}
-						else{
-							sw_check_head = 0;
-						}
-						if((RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Qj == 0) && (sw_check_head == 1)){
-						//	ROB_table[RES_Stat_Load[]] = RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].Vj + RES_Stat_Load[big_mem[sel_ld_unit].res_stat_num].res_A;
-						}
-						break;*/
-/*				}
-				for(unsigned a = 0; a < create_exe_unit.size(); a++){
-					if(create_exe_unit[a].exe_unit == MEMORY){
-						hold_mem = a;
-					}
-				}
-				ld_ex_done[sel_ld_unit] = 1;
-				num_latency_mem[sel_ld_unit] = create_exe_unit[hold_mem].latency_exe;
-				big_mem[sel_ld_unit].status = 1;
-			}
-		}
-	}
-	*/
 }
 
 void sim_ooo::write_res(){
-	std::cout << "****************WRITE RESULT******************" << '\n';
+//	std::cout << "****************WRITE RESULT******************" << '\n';
 	unsigned b_rob;
 
 	for(unsigned i = 0; i < RES_Stat_Int.size(); i++){
@@ -2794,19 +2651,19 @@ void sim_ooo::write_res(){
 
 			for(unsigned j = 0; j < RES_Stat_Load.size(); j++){
 				if(RES_Stat_Load[j].Qj == b_rob){
-					std::cout << "Gave the value to load store unit" << '\n';
+		//			std::cout << "Gave the value to load store unit" << '\n';
 					RES_Stat_Load[j].Vj = add_result[i];
 					RES_Stat_Load[j].Qj = 0;
 				}
 				if(RES_Stat_Load[j].Qk == b_rob){
-					std::cout << "Gave the value to load store unit for Qk" << '\n';
+		//			std::cout << "Gave the value to load store unit for Qk" << '\n';
 					RES_Stat_Load[j].Vk = add_result[i];
           ROB_table[RES_Stat_Load[j].res_dest].str_add = RES_Stat_Load[j].Vk + RES_Stat_Load[j].res_A;
           ROB_table[RES_Stat_Load[j].res_dest].is_available = 1;
           RES_Stat_Load[j].Qk = 0;
 				}
 			}
-			  std::cout << "Value of ROB:" << RES_Stat_Add[i].res_dest << '\n';
+		//	  std::cout << "Value of ROB:" << RES_Stat_Add[i].res_dest << '\n';
 				ROB_table[RES_Stat_Add[i].res_dest].rob_val = add_result[i];
 				add_result[i] = UNDEFINED;
 				add_ex_done[RES_Stat_Add[i].execution_unit_used] = 1;
@@ -2830,10 +2687,10 @@ void sim_ooo::write_res(){
 	}
 
 	for(unsigned i = 0; i < RES_Stat_Mul.size(); i++){
-		std::cout << "Value of i entering Mul:" << i << '\n';
-		std::cout << "Flag Mul value: " << flag_mem[i] << '\n';
+	//	std::cout << "Value of i entering Mul:" << i << '\n';
+	//	std::cout << "Flag Mul value: " << flag_mem[i] << '\n';
 		if(flag_mul[i] == 1){
-			std::cout << "Value of i in Mul whose result is ready: " << i << '\n';
+	//		std::cout << "Value of i in Mul whose result is ready: " << i << '\n';
 			b_rob = RES_Stat_Mul[i].res_dest + 1;
 			RES_Stat_Mul[i].res_busy = 0;
 
@@ -2918,16 +2775,16 @@ void sim_ooo::write_res(){
 
 	unsigned if_addr_same;
 	for(unsigned i = 0; i < RES_Stat_Load.size(); i++){
-		std::cout << "Index of flag mem: " << i << '\n';
-		std::cout << "flag_mem: " << flag_mem[i] << '\n';
+	//	std::cout << "Index of flag mem: " << i << '\n';
+	//	std::cout << "flag_mem: " << flag_mem[i] << '\n';
 		if(flag_mem[i] == 1){
-			std::cout << "In Load of write result" << '\n';
-			std::cout << "OP NUM: " << RES_Stat_Load[i].op_num << '\n';
+	//		std::cout << "In Load of write result" << '\n';
+	//		std::cout << "OP NUM: " << RES_Stat_Load[i].op_num << '\n';
 			switch (opcode_map[instruction_memory[RES_Stat_Load[i].op_num].op_code]){
 				case LW:
 				case LWS:
 					b_rob = RES_Stat_Load[i].res_dest + 1;
-					std::cout << "Value of B: " << b_rob << '\n';
+	//				std::cout << "Value of B: " << b_rob << '\n';
 					RES_Stat_Load[i].res_busy = 0;
 
 					/*for(unsigned iter_mem = 0; iter_mem < RES_Stat_Load.size(); iter_mem++){
@@ -2951,13 +2808,13 @@ void sim_ooo::write_res(){
 					}
 
 					for(unsigned j = 0; j < RES_Stat_Add.size(); j++){
-						std::cout << "In here I'm present" << '\n';
+	//					std::cout << "In here I'm present" << '\n';
 						if(RES_Stat_Add[j].Qj == b_rob){
 							RES_Stat_Add[j].Vj = mem_result[i];
 							RES_Stat_Add[j].Qj = 0;
 						}
 						if(RES_Stat_Add[j].Qk == b_rob){
-							std::cout << "Loading in Vk" << '\n';
+	//						std::cout << "Loading in Vk" << '\n';
 							RES_Stat_Add[j].Vk = mem_result[i];
 							RES_Stat_Add[j].Qk = 0;
 						}
@@ -2976,7 +2833,7 @@ void sim_ooo::write_res(){
 
 					for(unsigned j = 0; j < RES_Stat_Load.size(); j++){
 						if(RES_Stat_Load[j].Qj == b_rob){
-							std::cout << "Present here!!!" << '\n';
+	//						std::cout << "Present here!!!" << '\n';
 							RES_Stat_Load[j].Vj = mem_result[i];
 							RES_Stat_Load[j].Qj = 0;
 						}
@@ -2987,8 +2844,8 @@ void sim_ooo::write_res(){
 							RES_Stat_Load[j].Qk = 0;
 						}
 					}
-						std::cout << "Value of i: " << i << '\n';
-						std::cout << "Also came here" << '\n';
+	//					std::cout << "Value of i: " << i << '\n';
+	//					std::cout << "Also came here" << '\n';
             if(RES_Stat_Load[i].execution_unit_used!=UNDEFINED){
               ld_ex_done[RES_Stat_Load[i].execution_unit_used] = 1;
             }
@@ -3012,19 +2869,19 @@ void sim_ooo::write_res(){
 						RES_Stat_Load[i].op = NOTVALID;
 						RES_Stat_Load[i].wr_done = 1;
 						flag_mem[i] = 0;
-						std::cout << "Flag_MEM: " << flag_mem[i] << '\n';
+	//					std::cout << "Flag_MEM: " << flag_mem[i] << '\n';
 
 					break;
 
 				case SW:
 				case SWS:
 					b_rob = RES_Stat_Load[i].res_dest + 1;
-					std::cout << "In write result of Store" << '\n';
+	//				std::cout << "In write result of Store" << '\n';
 					if(RES_Stat_Load[i].Qk == 0){
-						std::cout << "No dependencies" << '\n';
+	//					std::cout << "No dependencies" << '\n';
 						for(unsigned j = 0; j < RES_Stat_Load.size(); j++){
 							if(RES_Stat_Load[j].address_raw == b_rob){
-								std::cout << "ADDRESS RAW DEPENDENCY FOUND AT: " << j << '\n';
+	//							std::cout << "ADDRESS RAW DEPENDENCY FOUND AT: " << j << '\n';
 								RES_Stat_Load[j].address_raw = 0;
 								RES_Stat_Load[j].from_forward = RES_Stat_Load[i].Vj;
 								ld_step1[j] = 0;
@@ -3038,9 +2895,9 @@ void sim_ooo::write_res(){
               }
             }
 
-            std::cout << "Value of Vj in store: " << RES_Stat_Load[i].Vj << '\n';
+//            std::cout << "Value of Vj in store: " << RES_Stat_Load[i].Vj << '\n';
 						ROB_table[b_rob - 1].rob_val = RES_Stat_Load[i].Vj;
-            std::cout << "ROB_VAL in SW: " << ROB_table[b_rob - 1].rob_val << '\n';
+//            std::cout << "ROB_VAL in SW: " << ROB_table[b_rob - 1].rob_val << '\n';
 						ROB_table[b_rob - 1].ready = 1;
             pending_ins[RES_Stat_Load[i].res_dest].log_write = num_cycles;
 						ROB_table[RES_Stat_Load[i].res_dest].state = WRITE_RESULT;
@@ -3065,19 +2922,18 @@ void sim_ooo::write_res(){
 }
 
 void sim_ooo::commit_stage(){
-	std::cout << "**********COMMIT************" << '\n';
+//	std::cout << "**********COMMIT************" << '\n';
 	unsigned d;
-	unsigned if_branch = 0;
 	unsigned flag_end = 0;
 	res_type_t type_res;
 	is_cleared = 0;
 	unsigned if_store_commit = 0;
 	unsigned hold_mem;
   if(ROB_table[head_ROB].ready == 1){
-		std::cout << "PC of head: " << hex << ROB_table[head_ROB].rob_pc << '\n';
+	//	std::cout << "PC of head: " << hex << ROB_table[head_ROB].rob_pc << '\n';
 		d = ROB_table[head_ROB].rob_dest;
 		type_res = ROB_table[head_ROB].dest_type;
-		std::cout << "OPCODE at head during COMMIT: " << instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code << '\n';
+	//	std::cout << "OPCODE at head during COMMIT: " << instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code << '\n';
 		switch(opcode_map[instruction_memory[ROB_table[head_ROB].rob_temp_pc].op_code]){
 			case BEQZ:
 			case BNEZ:
@@ -3086,17 +2942,19 @@ void sim_ooo::commit_stage(){
 			case BLEZ:
 			case BGEZ:
 				num_instructions++;
+        ROB_table[head_ROB].state = COMMIT;
+        pending_ins[head_ROB].log_commit = num_cycles;
 				if(ROB_table[head_ROB].if_branch_rob == 1){
 					current_PC = ROB_table[head_ROB].rob_val;
           ROB_table[head_ROB].state = COMMIT;
           pending_ins[head_ROB].log_commit = num_cycles;
-          clear_log();
+          /*clear_log();
 					clear_rob();
 					clear_res();
 					clear_reg();
 					clear_exe();
-
-					head_ROB = 0;
+          */
+					//head_ROB = 0;
 					if_branch = 1;
 				}
 				break;
@@ -3104,13 +2962,13 @@ void sim_ooo::commit_stage(){
 			case SW:
 			case SWS:
         if_store_commit = 1;
-				std::cout << "Am I a store: " << '\n';
+		//		std::cout << "Am I a store: " << '\n';
 				for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
-						std::cout << "Status of mem unit for store: " << big_mem[sel_ld_unit].status << '\n';
-						std::cout << "State at ROB of store: " << ROB_table[head_ROB].state << '\n';
+		//				std::cout << "Status of mem unit for store: " << big_mem[sel_ld_unit].status << '\n';
+			//			std::cout << "State at ROB of store: " << ROB_table[head_ROB].state << '\n';
 						if(big_mem[sel_ld_unit].status == 1 && ROB_table[head_ROB].state == WRITE_RESULT){
 							if(is_load_ex == 1){
-                std::cout << "Stalled here" << '\n';
+    //            std::cout << "Stalled here" << '\n';
 								//ld_ex_done[sel_ld_unit] = 0;
 								continue;
 							}
@@ -3126,13 +2984,14 @@ void sim_ooo::commit_stage(){
 				for(unsigned sel_ld_unit = 0; sel_ld_unit < big_mem.size(); sel_ld_unit++){
 					if(big_mem[sel_ld_unit].status == 0){
             if(is_load_ex == 0){
-              std::cout << "Latency of store before decrementing: " << num_latency_mem[sel_ld_unit] << '\n';
+  //            std::cout << "Latency of store before decrementing: " << num_latency_mem[sel_ld_unit] << '\n';
   						if(num_latency_mem[sel_ld_unit] > 1){
   							num_latency_mem[sel_ld_unit]--;
   //							flag_mem[big_mem[sel_ld_unit].res_stat_num] = 0;
   						}
   						else{
                 //flag_mem[big_mem[sel_ld_unit].res_stat_num] = 1;
+  //              std::cout << "ROB_Val: " << ROB_table[head_ROB].rob_val << '\n';
   							unsigned2char(ROB_table[head_ROB].rob_val,data_memory+ROB_table[head_ROB].rob_dest);
   							big_mem[sel_ld_unit].status = 1;
   							ld_ex_done[sel_ld_unit] = 1;
@@ -3165,8 +3024,8 @@ void sim_ooo::commit_stage(){
 			case ANDI:
 			case LW:
 				num_instructions++;
-				std::cout << "The destination register: " << d << '\n';
-				std::cout << "The headROB: " << head_ROB << '\n';
+	//			std::cout << "The destination register: " << d << '\n';
+	//			std::cout << "The headROB: " << head_ROB << '\n';
 				register_file[d] = ROB_table[head_ROB].rob_val;
         pending_ins[head_ROB].log_commit = num_cycles;
         ROB_table[head_ROB].state = COMMIT;
@@ -3214,32 +3073,32 @@ void sim_ooo::commit_stage(){
           float_reg_stat[d].ROB_num = UNDEFINED;
 				}
 			}
-			std::cout << "Check_END: " << check_end << '\n';
+//			std::cout << "Check_END: " << check_end << '\n';
 
 			head_ROB = head_ROB + 1;
-			std::cout << "Incrementing ROB head:" << head_ROB << '\n';
+//			std::cout << "Incrementing ROB head:" << head_ROB << '\n';
 
-			std::cout << "Size of ROB: " << ROB_table.size() << '\n';
+	//		std::cout << "Size of ROB: " << ROB_table.size() << '\n';
 			if(head_ROB == ROB_table.size()){
-				std::cout << "True here" << '\n';
+	//			std::cout << "True here" << '\n';
 				head_ROB = 0;
 			}
 		}
     //std::cout << "Value of if_commit: " << ROB_table[head_ROB].if_commit << '\n';
 		if(if_branch == 1){
-			std::cout << "True here as well" << '\n';
+//		std::cout << "True here as well" << '\n';
 			check_end = 0;
 			is_cleared = 1;
-			head_ROB = 0;
-      ROB_table[head_ROB].if_commit = 0;
+			//head_ROB = 0;
+      //ROB_table[head_ROB].if_commit = 0;
 		}
 	}
 	if(check_end == 1){
 		for(unsigned iter = 0; iter < ROB_table.size(); iter++){
-				std::cout << "Iter: " << iter << '\n';
-				std::cout << "Busy ROB:" << ROB_table[iter].rob_busy << '\n';
+	//			std::cout << "Iter: " << iter << '\n';
+	//			std::cout << "Busy ROB:" << ROB_table[iter].rob_busy << '\n';
 				if(ROB_table[iter].rob_busy != 0){
-					std::cout << "Always true" << '\n';
+	//				std::cout << "Always true" << '\n';
 					flag_end = 0;
 					break;
 				}
@@ -3254,7 +3113,7 @@ void sim_ooo::commit_stage(){
 	else{
 		eop_end = 0;
 	}
-	std::cout << "Head of ROB: " << head_ROB << '\n';
+//	std::cout << "Head of ROB: " << head_ROB << '\n';
 }
 //reset the state of the sim_oooulator
 
@@ -3458,7 +3317,7 @@ void sim_ooo::print_rob(){
 	cout << setfill(' ') << setw(5) << "Entry" << setw(6) << "Busy" << setw(7) << "Ready" << setw(12) << "PC" << setw(10) << "State" << setw(6) << "Dest" << setw(12) << "Value" << endl;
 	//fill here
 	for(unsigned i = 0; i < ROB_table.size(); i++){
-		std::cout << setfill(' ') << setw(5) << (i+1);
+		std::cout << setfill(' ') << setw(5) << (i);
 		if(ROB_table[i].rob_busy){std::cout << setw(6) << "yes";}
 		else{std::cout << setw(6) << "no";}
 		(ROB_table[i].ready)?std::cout << setw(7) << "yes":std::cout << setw(7) << "no";
@@ -3488,8 +3347,8 @@ void sim_ooo::print_rob(){
 		if(ROB_table[i].state == INVALID || ROB_table[i].rob_dest == UNDEFINED)std::cout << setw(6) << "-";
 		else if(ROB_table[i].dest_type == FLOAT_RES)std::cout << setfill(' ') << setw(5) << "F" << ROB_table[i].rob_dest;
 		else if(ROB_table[i].dest_type == INTEGER_RES)std::cout << setfill(' ') << setw(5) << "R" << ROB_table[i].rob_dest;
-		else if(ROB_table[i].dest_type == STORE_DEST)std::cout << setfill(' ') << setw(5) << dec << ROB_table[i].rob_dest;
-		if(ROB_table[i].state == WRITE_RESULT)std::cout << setw(12) << hex << ROB_table[i].rob_val << '\n';
+		else if(ROB_table[i].dest_type == STORE_DEST)std::cout << " " << dec << ROB_table[i].rob_dest;
+		if(ROB_table[i].state == WRITE_RESULT || ROB_table[i].state == COMMIT)std::cout << setw(4) << setfill(' ') << "0x" << setw(8) << setfill('0') << hex << ROB_table[i].rob_val << '\n';
 		else std::cout << setw(12) << "-" << '\n';
 	}
 

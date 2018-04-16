@@ -62,6 +62,7 @@ class sim_ooo{
 	unsigned is_cleared;
 	unsigned is_store_ex;
 	unsigned is_load_ex;
+	unsigned if_branch;
 public:
 
 	/* Instantiates the simulator
