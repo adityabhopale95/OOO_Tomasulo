@@ -515,7 +515,7 @@ void sim_ooo::run(unsigned cycles){
 				for(int i = 0; i < issue_size; i++){
 					PC_index = (current_PC - base_add)/4;
 					issue(PC_index);
-//					std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
+		//			std::cout << "ISSUE SUCCESS: " << issue_success << '\n';
 					if(issue_success == 1){
             pending_ins[current_B].log_pc = current_PC;
             pending_ins[current_B].log_issue = num_cycles;
@@ -558,6 +558,7 @@ void sim_ooo::run(unsigned cycles){
 					for(int i = 0; i < issue_size; i++){
 						PC_index = (current_PC - base_add)/4;
 						issue(PC_index);
+      //      std::cout << "ISSUE SUCCESS" << issue_success << '\n';
 						if(issue_success == 1){
               pending_ins[current_B].log_pc = current_PC;
               pending_ins[current_B].log_issue = num_cycles;
@@ -879,14 +880,14 @@ void sim_ooo::issue(unsigned temp_PC){
 			res_yes_load = 0;
 		}
 	}
-	//std::cout << "ROB_Available: " << rob_yes << " at position: " << current_B <<'\n';
-	//std::cout << "RESERVATION STATION Available for INT: " << res_yes_int << '\n';
-	//std::cout << "RESERVATION STATION Available for MUL: " << res_yes_mul << '\n';
-	//std::cout << "RESERVATION STATION Available for ADD: " << res_yes_add << '\n';
-	//std::cout << "RESERVATION STATION Available for MEM: " << res_yes_load << '\n';
+//	std::cout << "ROB_Available: " << rob_yes << " at position: " << current_B <<'\n';
+//	std::cout << "RESERVATION STATION Available for INT: " << res_yes_int << '\n';
+//	std::cout << "RESERVATION STATION Available for MUL: " << res_yes_mul << '\n';
+//	std::cout << "RESERVATION STATION Available for ADD: " << res_yes_add << '\n';
+//	std::cout << "RESERVATION STATION Available for MEM: " << res_yes_load << '\n';
 
-	//std::cout << "OPCODE in ISSUE:" << instruction_memory[temp_PC].op_code << '\n';
-	//std::cout << "TEMP_PC: " << temp_PC << '\n';
+//	std::cout << "OPCODE in ISSUE:" << instruction_memory[temp_PC].op_code << '\n';
+//	std::cout << "TEMP_PC: " << temp_PC << '\n';
   switch (opcode_map[instruction_memory[temp_PC].op_code]) {
     case XOR:
   	case ADD:

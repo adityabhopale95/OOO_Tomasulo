@@ -1,0 +1,892 @@
+
+BEFORE PROGRAM EXECUTION...
+======================================================================
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40960/0x0000a000    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+
+DATA MEMORY[0x0000a000:0x0000a020]
+0x0000a000: 00 00 80 3f 
+0x0000a004: 00 00 00 40 
+0x0000a008: 00 00 40 40 
+0x0000a00c: 00 00 80 40 
+0x0000a010: 00 00 a0 40 
+0x0000a014: 00 00 c0 40 
+0x0000a018: 00 00 e0 40 
+0x0000a01c: 00 00 00 41 
+
+*****************************
+STARTING THE PROGRAM...
+*****************************
+
+First 20 clock cycles: inspecting the registers at each clock cycle...
+======================================================================
+
+CLOCK CYCLE #0
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000000      0      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000000     ISSUE    R1           -
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000000  0x0000a000           -     -     -     0           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1                     -    0
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+
+
+CLOCK CYCLE #1
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000000      0      1      -      -
+0x00000004      1      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000000       EXE    R1           -
+    1   yes     no  0x00000004     ISSUE     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000000  0x0000a000           -     -     -     0           -
+  Load1   yes  0x00000004  0x42c80000           -     -     0     1  0x00000000
+  Load2    no           -           -           -     -     -     -           -
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1                     -    0
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+
+
+CLOCK CYCLE #2
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000000      0      1      -      -
+0x00000004      1      -      -      -
+0x00000008      2      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000000       EXE    R1           -
+    1   yes     no  0x00000004     ISSUE     -           -
+    2   yes     no  0x00000008     ISSUE    F2           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1   yes  0x00000000  0x0000a000           -     -     -     0           -
+  Load1   yes  0x00000004  0x42c80000           -     -     0     1  0x00000000
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x00000000
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1                     -    0
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+
+
+CLOCK CYCLE #3
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000000      0      1      3      -
+0x00000004      1      -      -      -
+0x00000008      2      -      -      -
+0x0000000c      3      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes    yes  0x00000000        WR    R1  0x0000a008
+    1   yes     no  0x00000004     ISSUE     -           -
+    2   yes     no  0x00000008     ISSUE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000004  0x42c80000  0x0000a008     -     -     1  0x00000000
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x00000000
+  Load3    no           -           -           -     -     -     -           -
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1                     -    0
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #4
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      -      -
+0x00000008      2      4      -      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes     no  0x00000004       EXE 40968           -
+    2   yes     no  0x00000008       EXE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000004  0x42c80000  0x0000a008     -     -     1  0x0000a008
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x0000a004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #5
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      5      -
+0x00000008      2      4      -      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes    yes  0x00000004        WR 40968  0x42c80000
+    2   yes     no  0x00000008       EXE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x0000a004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #6
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      5      -
+0x00000008      2      4      -      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+0x00000014      6      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes    yes  0x00000004        WR 40968  0x42c80000
+    2   yes     no  0x00000008       EXE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes     no  0x00000014     ISSUE     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000014           -  0x0000a008     2     -     5  0x00000000
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x0000a004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #7
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      5      -
+0x00000008      2      4      -      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+0x00000014      6      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes    yes  0x00000004        WR 40968  0x42c80000
+    2   yes     no  0x00000008       EXE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes     no  0x00000014     ISSUE     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000014           -  0x0000a008     2     -     5  0x00000000
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x0000a004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #8
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      5      -
+0x00000008      2      4      -      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+0x00000014      6      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes    yes  0x00000004        WR 40968  0x42c80000
+    2   yes     no  0x00000008       EXE    F2           -
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes     no  0x00000014     ISSUE     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000014           -  0x0000a008     2     -     5  0x00000000
+  Load2   yes  0x00000008  0x0000a004           -     -     -     2  0x0000a004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000           -     -     2     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #9
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+0x00000004      1      4      5      -
+0x00000008      2      4      9      -
+0x0000000c      3      -      -      -
+0x00000010      4      -      -      -
+0x00000014      6      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1   yes    yes  0x00000004        WR 40968  0x42c80000
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes     no  0x0000000c     ISSUE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes     no  0x00000014     ISSUE     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000014  0x40000000  0x0000a008     -     -     5  0x00000000
+  Load2    no           -           -           -     -     -     -           -
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000  0x40000000     -     -     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+
+
+CLOCK CYCLE #10
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+0x00000004      1      4      5     10
+0x00000008      2      4      9      -
+0x0000000c      3     10      -      -
+0x00000010      4      -      -      -
+0x00000014      6     10      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1   yes    yes  0x00000004    COMMIT 40968  0x42c80000
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes     no  0x0000000c       EXE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes     no  0x00000014       EXE 40968           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x00000014  0x40000000  0x0000a008     -     -     5  0x0000a008
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000  0x40000000     -     -     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+      F4                     -    0
+
+
+CLOCK CYCLE #11
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+0x00000004      1      4      5     10
+0x00000008      2      4      9      -
+0x0000000c      3     10      -      -
+0x00000010      4      -      -      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1   yes    yes  0x00000004    COMMIT 40968  0x42c80000
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes     no  0x0000000c       EXE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000  0x40000000     -     -     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+      F4                     -    0
+
+
+CLOCK CYCLE #12
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+0x00000004      1      4      5     10
+0x00000008      2      4      9      -
+0x0000000c      3     10      -      -
+0x00000010      4      -      -      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1   yes    yes  0x00000004    COMMIT 40968  0x42c80000
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes     no  0x0000000c       EXE    F3           -
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3   yes  0x00000010           -  0x0000a008     3     -     4  0x00000004
+   Add1   yes  0x0000000c  0x42c80000  0x40000000     -     -     3           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+      F4                     -    0
+
+
+CLOCK CYCLE #13
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+0x00000004      1      4      5     10
+0x00000008      2      4      9      -
+0x0000000c      3     10     13      -
+0x00000010      4      -      -      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1   yes    yes  0x00000004    COMMIT 40968  0x42c80000
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes    yes  0x0000000c        WR    F3  0x42cc0000
+    4   yes     no  0x00000010     ISSUE     -           -
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3   yes  0x00000010  0x42cc0000  0x0000a008     -     -     4  0x00000004
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+      F4                     -    0
+
+
+CLOCK CYCLE #14
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+         -      -      -      -      -
+0x00000008      2      4      9      -
+0x0000000c      3     10     13      -
+0x00000010      4     14      -      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1    no     no           -         -     -           -
+    2   yes    yes  0x00000008        WR    F2  0x40000000
+    3   yes    yes  0x0000000c        WR    F3  0x42cc0000
+    4   yes     no  0x00000010       EXE 40972           -
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3   yes  0x00000010  0x42cc0000  0x0000a008     -     -     4  0x0000a00c
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2                     -    2
+      F3                     -    3
+      F4                     -    0
+
+
+CLOCK CYCLE #15
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10      -      -      -
+0x0000001c     15      -      -      -
+         -      -      -      -      -
+0x0000000c      3     10     13      -
+0x00000010      4     14     15      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018     ISSUE    F4           -
+    1   yes     no  0x0000001c     ISSUE    F5           -
+    2    no     no           -         -     -           -
+    3   yes    yes  0x0000000c        WR    F3  0x42cc0000
+    4   yes    yes  0x00000010        WR 40972  0x42cc0000
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x0000001c  0x0000a008           -     -     -     1  0x00000000
+  Load2   yes  0x00000018  0x0000a008           -     -     -     0  0x00000004
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3                     -    3
+      F4                     -    0
+      F5                     -    1
+
+
+CLOCK CYCLE #16
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10     16      -      -
+0x0000001c     15     16      -      -
+0x00000020     16      -      -      -
+         -      -      -      -      -
+0x00000010      4     14     15      -
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes     no  0x00000018       EXE    F4           -
+    1   yes     no  0x0000001c       EXE    F5           -
+    2   yes     no  0x00000020     ISSUE    F6           -
+    3    no     no           -         -     -           -
+    4   yes    yes  0x00000010        WR 40972  0x42cc0000
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1   yes  0x0000001c  0x0000a008  0x40000000     -     -     1  0x0000a008
+  Load2   yes  0x00000018  0x0000a008  0x42cc0000     -     -     0  0x0000a00c
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x00000020           -           -     0     1     2           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3        102/0x42cc0000    -
+      F4                     -    0
+      F5                     -    1
+      F6                     -    2
+
+
+CLOCK CYCLE #17
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10     16     17      -
+0x0000001c     15     16     17      -
+0x00000020     16      -      -      -
+0x00000024     17      -      -      -
+0x00000010      4     14     15     17
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes    yes  0x00000018        WR    F4  0x42cc0000
+    1   yes    yes  0x0000001c        WR    F5  0x40000000
+    2   yes     no  0x00000020     ISSUE    F6           -
+    3   yes     no  0x00000024     ISSUE     -           -
+    4   yes    yes  0x00000010    COMMIT 40972  0x42cc0000
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+  Load3   yes  0x00000024           -  0x0000a008     2     -     3  0x00000000
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x00000020  0x42cc0000  0x40000000     -     -     2           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3        102/0x42cc0000    -
+      F4                     -    0
+      F5                     -    1
+      F6                     -    2
+
+
+CLOCK CYCLE #18
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10     16     17      -
+0x0000001c     15     16     17      -
+0x00000020     16     18      -      -
+0x00000024     17      -      -      -
+0x00000010      4     14     15     17
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes    yes  0x00000018        WR    F4  0x42cc0000
+    1   yes    yes  0x0000001c        WR    F5  0x40000000
+    2   yes     no  0x00000020       EXE    F6           -
+    3   yes     no  0x00000024     ISSUE     -           -
+    4   yes    yes  0x00000010    COMMIT 40972  0x42cc0000
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+  Load3   yes  0x00000024           -  0x0000a008     2     -     3  0x00000000
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x00000020  0x42cc0000  0x40000000     -     -     2           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3        102/0x42cc0000    -
+      F4                     -    0
+      F5                     -    1
+      F6                     -    2
+
+
+CLOCK CYCLE #19
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+0x00000018     10     16     17      -
+0x0000001c     15     16     17      -
+0x00000020     16     18      -      -
+0x00000024     17      -      -      -
+0x00000010      4     14     15     17
+0x00000014      6     10     11      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0   yes    yes  0x00000018        WR    F4  0x42cc0000
+    1   yes    yes  0x0000001c        WR    F5  0x40000000
+    2   yes     no  0x00000020       EXE    F6           -
+    3   yes     no  0x00000024     ISSUE     -           -
+    4   yes    yes  0x00000010    COMMIT 40972  0x42cc0000
+    5   yes    yes  0x00000014        WR 40968  0x40000000
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+  Load3   yes  0x00000024           -  0x0000a008     2     -     3  0x00000000
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1   yes  0x00000020  0x42cc0000  0x40000000     -     -     2           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3        102/0x42cc0000    -
+      F4                     -    0
+      F5                     -    1
+      F6                     -    2
+
+
+EXECUTING PROGRAM TO COMPLETION...
+
+PROGRAM TERMINATED
+===================
+
+PENDING INSTRUCTIONS STATUS
+        PC  Issue    Exe     WR Commit
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+         -      -      -      -      -
+
+REORDER BUFFER
+Entry  Busy  Ready          PC     State  Dest       Value
+    0    no     no           -         -     -           -
+    1    no     no           -         -     -           -
+    2    no     no           -         -     -           -
+    3    no     no           -         -     -           -
+    4    no     no           -         -     -           -
+    5    no     no           -         -     -           -
+
+RESERVATION STATIONS
+   Name  Busy          PC          Vj          Vk    Qj    Qk  Dest     Address
+   Int1    no           -           -           -     -     -     -           -
+  Load1    no           -           -           -     -     -     -           -
+  Load2    no           -           -           -     -     -     -           -
+  Load3    no           -           -           -     -     -     -           -
+   Add1    no           -           -           -     -     -     -           -
+   Add2    no           -           -           -     -     -     -           -
+  Mult1    no           -           -           -     -     -     -           -
+  Mult2    no           -           -           -     -     -     -           -
+
+GENERAL PURPOSE REGISTERS
+Register                 Value  ROB
+      R1      40968/0x0000a008    -
+      R2      40964/0x0000a004    -
+      F1        100/0x42c80000    -
+      F2          2/0x40000000    -
+      F3        102/0x42cc0000    -
+      F4        102/0x42cc0000    -
+      F5          2/0x40000000    -
+      F6        204/0x434c0000    -
+
+DATA MEMORY[0x0000a000:0x0000a020]
+0x0000a000: 00 00 80 3f 
+0x0000a004: 00 00 00 40 
+0x0000a008: 00 00 4c 43 
+0x0000a00c: 00 00 cc 42 
+0x0000a010: 00 00 a0 40 
+0x0000a014: 00 00 c0 40 
+0x0000a018: 00 00 e0 40 
+0x0000a01c: 00 00 00 41 
+
+EXECUTION LOG
+        PC  Issue    Exe     WR Commit
+0x00000000      0      1      3      4
+0x00000004      1      4      5     10
+0x00000008      2      4      9     15
+0x0000000c      3     10     13     16
+0x00000010      4     14     15     17
+0x00000014      6     10     11     22
+0x00000018     10     16     17     27
+0x0000001c     15     16     17     28
+0x00000020     16     18     28     29
+0x00000024     17     29     30     31
+
+Instruction executed = 10
+Clock cycles = 36
+IPC = 0.277778
